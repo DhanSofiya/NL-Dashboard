@@ -1,0 +1,878 @@
+h1 {
+    text-align: center;
+}
+
+
+/* ============================ GENERAL PAGE STYLING ============================ */
+body {
+    font-family: 'Tahoma', monospace;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Wrapper to separate sidebar & content */
+.wrapper {
+    display: flex;
+    height: 100vh;
+}
+
+/* ============================ SIDEBAR STYLING ============================ */
+.sidebar-container {
+    width: 240px; /* Increased width for the sidebar */
+    background: #222;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2);
+    transition: 0.3s ease;
+}
+
+.sidebar-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+/* Sidebar Nav Styling */
+.sidebar-container nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-container nav ul li {
+    margin: 15px 0;
+}
+
+.sidebar-container nav ul li a {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+/* Sidebar Link Styling */
+.sidebar-container nav ul li a:hover,
+.sidebar-container nav ul li.active {
+    background: #575757;
+    color: white;
+}
+
+/* ============================ CONTENT CONTAINER STYLING ============================ */
+.content-container {
+    margin-left: 260px;
+    flex-grow: 1;
+    padding: 40px;
+    box-sizing: border-box;
+    width: calc(100% - 260px);
+    overflow-x: auto;
+}
+
+/* ============================ SUPPLIER GRID STYLING ============================ */
+.supplier-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+    margin-top: 20px;
+}
+
+.supplier-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+}
+
+.supplier-card:hover {
+    transform: scale(1.05);
+}
+
+.supplier-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.supplier-card p {
+    font-size: 14px;
+    margin-bottom: 15px;
+    color: #7f8c8d;
+}
+
+.supplier-card img {
+    width: 100%; /* Ensures image fits inside the card */
+    max-height: 300px; /* Limits the image height */
+    object-fit: cover; /* Maintains aspect ratio */
+}
+
+/* Add to bottom of styles.css */
+.supplier-card h3 {
+    color: #222 !important;
+    background: rgba(255,255,255,0.8);
+    padding: 4px 8px;
+    border-radius: 5px;
+    display: inline-block;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+
+/* ============================ ADD SUPPLIER BUTTON STYLING ============================ */
+.add-supplier-button {
+    background-color: #6fa4c7;  /* Light Blue Color */
+    color: white;
+    border: none;
+    padding: 8px 15px;           /* Smaller size */
+    font-size: 14px;             /* Smaller font size */
+    cursor: pointer;
+    position: relative;
+    top: 20px;
+    right: 0;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.add-supplier-button:hover {
+    background-color: #2980b9;  /* Darker Blue */
+}
+
+/* ============================ ORDER STOCK CONTAINER ============================ */
+.order-stock-container {
+    width: 250px;
+    background-color: #a1a7a8;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-left: 20px;
+}
+
+.order-stock-container h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.order-stock-container p {
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+/* ============================ TABLE STYLING ============================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: white;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+/* ============================ LOGOUT BUTTON STYLING ============================ */
+.logout-button {
+    width: 100%;
+    background-color: rgb(80, 15, 15);
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+.logout-button:hover {
+    background-color: darkred;
+}
+
+/* ============================ FORM STYLING ============================ */
+form label {
+    display: block;
+    margin-top: 10px;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+/* ============================ ADD SUPPLIER FORM STYLING ============================ */
+.add-supplier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+    width: 500px;
+    margin: auto;
+}
+
+.add-supplier-form input,
+.add-supplier-form select,
+.add-supplier-form button {
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.add-supplier-form button {
+    background-color: #27ae60;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-supplier-form button:hover {
+    background-color: #2ecc71;
+}
+
+.form-title {
+    font-size: 24px;
+    text-align: center;
+}
+
+/* ============================ LOGIN FORM STYLING ============================ */
+
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #f5f5f5;
+  }
+  
+  /* Floating card */
+  .login-container {
+    width: 400px;
+    padding: 2rem 2.5rem;
+    border-radius: 20px;
+    background-color: #e0e0e0; /* light grey box */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Title */
+  .login-container h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+  }
+  
+  /* Form layout */
+  .login-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+  
+  /* Inputs */
+  .login-container input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    width: 100%;
+  }
+  
+  /* Button */
+  .login-container button {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #4caf50; /* ✅ green button */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .login-container button:hover {
+    background-color: #388e3c;
+  }
+  
+  /* Error message */
+  #errorMessage {
+    color: red;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  
+/* ============================ RESPONSIVE STYLING ============================ */
+@media screen and (max-width: 768px) {
+    .wrapper {
+        flex-direction: column;
+    }
+
+    .sidebar-container {
+        width: 100%;
+        height: auto;
+        position: static;
+        box-shadow: none;
+    }
+
+    .content-container {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .add-supplier-form {
+        width: 100%;
+    }
+
+    .supplier-grid {
+        flex-direction: column;
+    }
+
+    .supplier-card {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .order-stock-container {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 20px;
+    }
+
+    .add-supplier-button {
+        position: static;
+        margin-top: 20px;
+        align-self: center;
+    }
+}
+/* ============================ ORDER STOCK SLIDE-IN PANEL ============================ */
+.order-stock-container.hidden-slide {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: #a1a7a8;
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    transform: translateX(100%);
+    transition: transform 0.4s ease-in-out;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.order-stock-container.visible {
+    transform: translateX(0%);
+}
+
+.order-stock-container h2 {
+    text-align: center;
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+.order-stock-container ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.confirm-order-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.confirm-order-button:hover {
+    background-color: #27ae60;
+}
+
+.close-panel {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    margin-bottom: -10px;
+}
+
+/* ============================ FINANCE DASHBOARD STYLING ============================ */
+.finance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.finance-card {
+    background: #add6e4;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 1rem;
+    color: #000;
+    max-width: 100%;
+}
+
+#profitabilityCard,
+#productRevenueCard {
+    grid-column: 1 / span 2;
+}
+
+.finance-card h3 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+canvas {
+    width: 100% !important;
+    max-width: 700px;
+    max-height: 300px;
+    display: block;
+    margin: 0 auto;
+}
+
+select {
+    display: block;
+    margin: 0 auto 10px auto;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+/* Finance page header row */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.dashboard-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.download-button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.download-button:hover {
+    background-color: #21618c;
+}
+
+@media (max-width: 768px) {
+    .finance-grid {
+        grid-template-columns: 1fr;
+    }
+    #profitabilityCard,
+    #productRevenueCard {
+        grid-column: auto;
+    }
+}
+/* ============================ DARK MODE ============================ */
+body.dark-mode {
+    background-color: #181818;
+    color: #f4f4f4;
+}
+
+body.dark-mode .sidebar-container {
+    background-color: #111;
+}
+
+body.dark-mode .finance-card {
+    background-color: #222;
+    color: #f4f4f4;
+}
+
+body.dark-mode .download-button {
+    background-color: #444;
+}
+
+/* ============================ INVENTORY ============================ */
+
+   .inventory-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .supplier-card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 1rem;
+      width: 250px;
+      text-align: center;
+    }
+
+    .supplier-card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .supplier-card h3 {
+      margin: 0.5rem 0 0.25rem;
+    }
+
+    .supplier-card p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    .action-buttons {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .order-stock-btn {
+      background-color: #28d219;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-card {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1rem;
+      background-color: #6fa4c7;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      height: 390px;
+      width: 250px;
+    }
+
+    .add-card:hover {
+      background-color: #2980b9;
+    }
+
+        .supplier-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .supplier-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      width: 250px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .supplier-card img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .supplier-card h3 {
+      margin: 0.5rem 0 0.25rem;
+    }
+
+    .supplier-card p {
+      font-size: 0.9rem;
+      color: #555;
+      margin: 0.25rem 0;
+    }
+
+    .supplier-card button {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #6fa4c7;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .supplier-card button:hover {
+      background-color: #2980b9;
+    }
+
+    .add-card {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1rem;
+      background-color: #6fa4c7;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      width: 250px;
+      height: 390px;
+    }
+
+    .add-card:hover {
+      background-color: #2980b9;
+    }
+
+    /* ============================ ADMIN USERS DARK MODE FIX ============================ */
+body.dark-mode .user-card {
+    background-color: #555555 !important;
+    color: #f4f4f4 !important;
+}
+
+body.dark-mode .user-card p {
+    color: #dddddd !important;
+}
+
+body.dark-mode .user-card h3 {
+    color: #ffffff !important;
+}
+
+/* ============================ DARK MODE FIX FOR ORDERS TABLE ============================ */
+body.dark-mode .orders-table {
+    background-color: #222 !important;
+    color: #f4f4f4 !important;
+    border-color: #444 !important;
+}
+
+body.dark-mode .orders-table th {
+    background-color: #333 !important;
+    color: #f4f4f4 !important;
+}
+
+body.dark-mode .orders-table td {
+    background-color: #222 !important;
+    color: #dddddd !important;
+    border-color: #444 !important;
+}
+
+/* optional: status color override for better contrast */
+body.dark-mode .status.Placed {
+    color: #42a5f5;
+}
+body.dark-mode .status.Delivered {
+    color: #66bb6a;
+}
+body.dark-mode .status.Cancelled {
+    color: #ef5350;
+}
+
+/* ============================ DARK MODE FOR SUPPLIER DETAILS ============================ */
+body.dark-mode .order-form {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+body.dark-mode .order-form label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .order-form input,
+body.dark-mode .order-form textarea {
+  background-color: #2b2b2b;
+  color: #ffffff;
+  border: 1px solid #666;
+}
+
+body.dark-mode .order-form button {
+  background-color: #2ecc71;
+  color: white;
+}
+
+body.dark-mode .order-form button:hover {
+  background-color: #27ae60;
+}
+/* ===================== DARK MODE ===================== */
+
+body.dark-mode .supplier-box,
+body.dark-mode .order-box {
+  background-color: #1e1e1e;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+body.dark-mode .supplier-box input,
+body.dark-mode .order-box input,
+body.dark-mode .order-box textarea {
+  background-color: #2c2c2c;
+  border: 1px solid #666;
+  color: #fff;
+}
+
+body.dark-mode .supplier-box input::placeholder,
+body.dark-mode .order-box input::placeholder,
+body.dark-mode .order-box textarea::placeholder {
+  color: #aaa;
+}
+
+body.dark-mode .supplier-box button.update-button {
+  background-color: #2196f3;
+}
+
+body.dark-mode .supplier-box button.delete-button {
+  background-color: #e53935;
+}
+
+body.dark-mode .order-box button.send-button {
+  background-color: #4caf50;
+}
+
+body.dark-mode h1,
+body.dark-mode h3,
+body.dark-mode label {
+  color: #e0e0e0;
+}
+/* === User Management Stats Panel === */
+.user-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.stat-card {
+  flex: 1 1 150px;
+  padding: 1rem;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  cursor: default;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card span {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.stat-card.add-user {
+  background-color: #4caf50;
+  cursor: pointer;
+}
+
+.stat-card.total-users {
+  background-color: #2196f3;
+}
+
+.stat-card.total-admin {
+  background-color: #3f51b5;
+}
+
+.stat-card.total-staff {
+  background-color: #009688;
+}
+
+.stat-card.total-rider {
+  background-color: #ff5722;
+}
+
+/* === Admin User Cards === */
+.user-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.user-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.user-card img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.user-card h3 {
+  margin: 0;
+}
+
+.user-card p {
+  margin: 4px 0;
+  color: #555;
+}
+
+.user-card button {
+  margin-top: 6px;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-card .delete {
+  background-color: #f44336;
+  color: white;
+}
+
+.user-card .edit {
+  background-color: #b2f2bb;
+  color: #2e7d32;
+}

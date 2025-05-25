@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Finance Dashboard | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="wrapper">
+  <div id="sidebar"></div>
+
+  <div class="content-container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Finance Dashboard</h1>
+      <button class="download-button" id="downloadPDF">📥 PDF</button>
+    </div>
+
+    <div class="finance-grid" id="financeGrid">
+      <div class="finance-card" id="profitabilityCard">
+        <h3>📊 Business Profitability Overview</h3>
+        <canvas id="profitabilityChart"></canvas>
+      </div>
+
+      <div class="finance-card" id="productRevenueCard">
+        <h3>🛒 Product Sales Distribution</h3>
+        <canvas id="productChart"></canvas>
+      </div>
+
+      <div class="finance-card" id="employeeWagesCard">
+        <h3>👥 Employee Wages by Role</h3>
+        <select id="employeeFilter">
+          <option value="All">All</option>
+          <option value="Admin">Admin</option>
+          <option value="Staff">Staff</option>
+          <option value="Rider">Rider</option>
+        </select>
+        <canvas id="wagesChart"></canvas>
+      </div>
+
+      <div class="finance-card" id="supplierOrdersCard">
+        <h3>🚚 Supplier Spending Overview</h3>
+        <canvas id="supplierChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  // ✅ Sidebar and Dark Mode
+  await fetch("/components/sidebar.html")
+    .then(res => res.text())
+    .then(data => document.getElementById("sidebar").innerHTML = data)
+    .then(() => {
+      document.getElementById("logoutButton").addEventListener("click", async () => {
+        await fetch("/auth/logout", { method: "POST" });
+        localStorage.clear();
+        location.href = "/login";
+      });
+
+      document.getElementById("darkModeToggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+      });
+
+      if (localStorage.getItem("darkMode") === "enabled") {
+        document.body.classList.add("dark-mode");
+      }
+    });
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+
+  // 📊 Profitability (static mock for now)
+  new Chart(document.getElementById('profitabilityChart').getContext('2d'), {
+    type:'line',
+    data:{
+      labels: months,
+      datasets:[
+        { label:'Revenue', data:[10000,12000,15000,17000,16000,18000], borderColor:'#2e86de', fill:false },
+        { label:'Supplier Cost', data:[4000,5000,6000,7000,6000,6500], borderColor:'#e67e22', fill:false },
+        { label:'Wages', data:[2000,2100,2200,2300,2400,2500], borderColor:'#27ae60', fill:false }
+      ]
+    }
+  });
+
+  // 👥 Employee Wages by Role
+  const roles = ['Admin', 'Staff', 'Rider'];
+  const roleColors = { Admin:'#9b59b6', Staff:'#2980b9', Rider:'#2ecc71' };
+  let wagesChart = new Chart(document.getElementById('wagesChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: months, datasets: [] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  const generateRandomMonthlyData = (total) => {
+    const avg = total / 6;
+    return Array(6).fill(0).map(() => Math.round(avg * (0.8 + Math.random() * 0.4)));
+  };
+
+  const wageRes = await fetch('/api/finance/wages');
+  const wageJson = await wageRes.json();
+  const totalWages = wageJson.totalWages || 0;
+
+  const mockRoleSplit = {
+    Admin: totalWages * 0.3,
+    Staff: totalWages * 0.5,
+    Rider: totalWages * 0.2
+  };
+
+  const employeeFilter = document.getElementById('employeeFilter');
+  employeeFilter.addEventListener('change', () => {
+    const choice = employeeFilter.value;
+    let datasets = [];
+
+    if (choice === "All") {
+      datasets = roles.map(role => ({
+        label: role,
+        data: generateRandomMonthlyData(mockRoleSplit[role]),
+        backgroundColor: roleColors[role]
+      }));
+    } else {
+      datasets = [{
+        label: choice,
+        data: generateRandomMonthlyData(mockRoleSplit[choice]),
+        backgroundColor: roleColors[choice]
+      }];
+    }
+
+    wagesChart.data.datasets = datasets;
+    wagesChart.update();
+  });
+  employeeFilter.dispatchEvent(new Event('change'));
+
+  // 🚚 Supplier Orders (static for now)
+  new Chart(document.getElementById('supplierChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Supplier Orders (MYR)',
+        data: [5000, 5200, 4800, 5600, 5100, 5800],
+        backgroundColor: '#f39c12'
+      }]
+    }
+  });
+
+  // 🛒 Product Revenue (static for now)
+  new Chart(document.getElementById('productChart').getContext('2d'), {
+    type:'doughnut',
+    data:{
+      labels:['Product A','Product B','Product C','Product D'],
+      datasets:[{ data:[25,15,30,20], backgroundColor:['#1abc9c','#9b59b6','#f1c40f','#e74c3c'] }]
+    }
+  });
+
+  // 📥 PDF Export
+  document.getElementById("downloadPDF").addEventListener("click", async()=> {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    await html2canvas(document.getElementById("financeGrid")).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData,'PNG',0,0,pdfWidth,pdfHeight);
+      pdf.save("Finance_Dashboard.pdf");
+    });
+  });
+});
+</script>
+</body>
+</html>

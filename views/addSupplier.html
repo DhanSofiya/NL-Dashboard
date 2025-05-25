@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add New Supplier | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar-container">
+      <h2>Dashboard</h2>
+      <nav>
+        <ul>
+          <li><a href="/admin-users">👤 Users</a></li>
+          <li><a href="/inventory">📦 Inventory</a></li>
+          <li><a href="/suppliers">🚚 Suppliers</a></li>
+          <li><a href="/finance">💰 Finance</a></li>
+          <li><a href="/orders">🛒 Orders</a></li>
+        </ul>
+      </nav>
+      <button id="logoutButton" class="logout-button">Logout</button>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="content-container">
+      <h1 class="form-title">Add New Supplier</h1>
+
+      <form id="addSupplierForm" class="add-supplier-form">
+        <label for="name">Supplier Name:</label>
+        <input type="text" id="name" required />
+
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" required />
+
+        <label for="address">Business Address:</label>
+        <input type="text" id="address" required />
+
+        <label for="imageUrl">Image URL:</label>
+        <input type="url" id="imageUrl" required />
+
+        <button type="submit">Add Supplier</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("addSupplierForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const imageUrl = document.getElementById("imageUrl").value.trim();
+
+      // Basic validation
+      if (!name || !email || !address || !imageUrl) {
+        alert("All fields are required.");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5000/api/suppliers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, address, imageUrl })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Supplier added successfully!");
+        window.location.href = "/suppliers";
+      } else {
+        alert("Failed to add supplier: " + (data.message || "Unknown error"));
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    });
+  </script>
+</body>
+</html>

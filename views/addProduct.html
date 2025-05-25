@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Product | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .submit-btn {
+      background-color: #4caf50;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <aside class="sidebar-container">
+      <h2>Dashboard</h2>
+      <nav>
+        <ul>
+          <li><a href="/admin-users">👤 Users</a></li>
+          <li><a href="/inventory">📦 Inventory</a></li>
+          <li><a href="/suppliers">🚚 Suppliers</a></li>
+          <li><a href="/finance">💰 Finance</a></li>
+          <li><a href="/orders">🛒 Orders</a></li>
+        </ul>
+      </nav>
+      <button id="logoutButton" class="logout-button">Logout</button>
+    </aside>
+
+    <div class="content-container">
+      <h1>Add Product</h1>
+      <div class="form-container">
+        <form id="addProductForm">
+          <label>Product Name</label>
+          <input type="text" id="name" required />
+
+          <label>Category</label>
+          <select id="category" required>
+            <option value="">Select Category</option>
+          </select>
+
+          <label>Supplier</label>
+          <select id="supplier" required>
+            <option value="">Select Supplier</option>
+          </select>
+
+          <label>Price (RM)</label>
+          <input type="number" id="price" min="0" step="0.01" required />
+
+          <label>Image URL</label>
+          <input type="url" id="image_uri" required />
+
+          <label>Description</label>
+          <textarea id="description" rows="4" required></textarea>
+
+          <button type="submit" class="submit-btn">Submit Product</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadCategories() {
+      try {
+        const res = await fetch("http://localhost:5000/api/categories");
+        const categories = await res.json();
+        const select = document.getElementById("category");
+        categories.forEach(cat => {
+          const option = document.createElement("option");
+          option.value = cat._id;
+          option.textContent = cat.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    }
+
+    async function loadSuppliers() {
+      try {
+        const res = await fetch("http://localhost:5000/api/suppliers");
+        const suppliers = await res.json();
+        const select = document.getElementById("supplier");
+        suppliers.forEach(sup => {
+          const option = document.createElement("option");
+          option.value = sup._id;
+          option.textContent = sup.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Failed to load suppliers", err);
+      }
+    }
+
+    document.getElementById("addProductForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const image = document.getElementById("image_uri").value;
+      const price = parseFloat(document.getElementById("price").value) || 0;
+      const description = document.getElementById("description").value;
+      const category = document.getElementById("category").value;
+      const supplier = document.getElementById("supplier").value;
+
+      const response = await fetch("http://localhost:5000/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, image, price, description, category, supplier })
+      });
+
+      if (response.ok) {
+        alert("Product added!");
+        window.location.href = "/inventory";
+      } else {
+        try {
+          const data = await response.json();
+          alert("Failed: " + (data.message || "Unknown error"));
+        } catch {
+          alert("Failed to add product. Server error.");
+        }
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    });
+
+    loadCategories();
+    loadSuppliers();
+  </script>
+</body>
+</html>

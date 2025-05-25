@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin User Management | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+</head>
+<body>
+  <div class="wrapper">
+    <div id="sidebar"></div>
+
+    <div class="content-container">
+      <h1>User Management</h1>
+
+      <!-- 🔢 Stat Panel -->
+      <div class="user-stats">
+        <div class="stat-card add-user" onclick="window.location.href='/addUser.html'">
+          <span>➕ Add User</span>
+        </div>
+        <div class="stat-card total-users" id="totalUsers">
+          <span>Total Users: 0</span>
+        </div>
+        <div class="stat-card total-admin" id="totalAdmin">
+          <span>Total Admin: 0</span>
+        </div>
+        <div class="stat-card total-staff" id="totalStaff">
+          <span>Total Staff: 0</span>
+        </div>
+        <div class="stat-card total-rider" id="totalRider">
+          <span>Total Rider: 0</span>
+        </div>
+      </div>
+
+      <!-- 👤 Existing Users Grid -->
+      <section class="user-list">
+        <h2>Existing Users</h2>
+        <div class="user-grid" id="userGrid"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      await fetch("/components/sidebar.html")
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById("sidebar").innerHTML = data;
+
+          document.getElementById("logoutButton").addEventListener("click", async () => {
+            await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "/login";
+          });
+
+          document.getElementById("darkModeToggle").addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+          });
+
+          if (localStorage.getItem("darkMode") === "enabled") {
+            document.body.classList.add("dark-mode");
+          }
+        });
+
+      const userGrid = document.getElementById("userGrid");
+
+      const fetchUsers = async () => {
+        const response = await fetch("http://localhost:5000/api/admin-users/admin-users");
+        const users = await response.json();
+
+        let totalUsers = 0, totalAdmin = 0, totalStaff = 0, totalRider = 0;
+        userGrid.innerHTML = "";
+
+        users.forEach(user => {
+          totalUsers++;
+          if (user.role === "Admin") totalAdmin++;
+          if (user.role === "Staff") totalStaff++;
+          if (user.role === "Rider") totalRider++;
+
+          const profilePic = user.role === "Admin"
+            ? "https://cdn-icons-png.flaticon.com/512/115/115893.png"
+            : "https://cdn-icons-png.flaticon.com/512/484/484568.png";
+
+          const card = document.createElement("div");
+          card.classList.add("user-card");
+          card.innerHTML = `
+            <img src="${profilePic}" alt="${user.role} Avatar" />
+            <h3>${user.name}</h3>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Role:</strong> ${user.role}</p>
+            <button class="delete" onclick="deleteUser('${user._id}')">Delete</button>
+            <button class="edit" onclick="goToEditPage('${user._id}', '${encodeURIComponent(user.name)}', '${encodeURIComponent(user.email)}', '${user.role}')">Edit</button>
+          `;
+          userGrid.appendChild(card);
+        });
+
+        document.getElementById("totalUsers").innerHTML = `<span>Total Users: ${totalUsers}</span>`;
+        document.getElementById("totalAdmin").innerHTML = `<span>Total Admin: ${totalAdmin}</span>`;
+        document.getElementById("totalStaff").innerHTML = `<span>Total Staff: ${totalStaff}</span>`;
+        document.getElementById("totalRider").innerHTML = `<span>Total Rider: ${totalRider}</span>`;
+      };
+
+      window.deleteUser = async (id) => {
+        await fetch(`http://localhost:5000/api/admin-users/admin-users/${id}`, { method: "DELETE" });
+        fetchUsers();
+      };
+
+      window.goToEditPage = (id, name, email, role) => {
+        window.location.href = `/editAdmin.html?id=${id}&name=${name}&email=${email}&role=${role}`;
+      };
+
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !["Godmode", "Admin", "Staff"].includes(user.role)) {
+        window.location.href = "/login";
+      }
+
+      fetchUsers();
+    });
+  </script>
+</body>
+</html>

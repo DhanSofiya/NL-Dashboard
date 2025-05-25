@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Product | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+      gap: 1rem;
+    }
+    .update-btn {
+      background-color: #4caf50;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .delete-btn {
+      background-color: #f44336;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <aside class="sidebar-container">
+      <h2>Dashboard</h2>
+      <nav>
+        <ul>
+          <li><a href="/admin-users">👤 Users</a></li>
+          <li><a href="/inventory">📦 Inventory</a></li>
+          <li><a href="/suppliers">🚚 Suppliers</a></li>
+          <li><a href="/finance">💰 Finance</a></li>
+          <li><a href="/orders">🛒 Orders</a></li>
+        </ul>
+      </nav>
+      <button id="logoutButton" class="logout-button">Logout</button>
+    </aside>
+
+    <div class="content-container">
+      <h1>Edit Product</h1>
+      <div class="form-container">
+        <form id="editProductForm">
+          <label>Product Name</label>
+          <input type="text" id="name" required />
+
+          <label>Category</label>
+          <select id="category" required></select>
+
+          <label>Supplier</label>
+          <select id="supplier" required></select>
+
+          <label>Price (RM)</label>
+          <input type="number" id="price" min="0" required />
+
+          <label>Image URL</label>
+          <input type="url" id="image_uri" required />
+
+          <label>Description</label>
+          <textarea id="description" rows="4" required></textarea>
+
+          <div class="button-row">
+            <button type="submit" class="update-btn">Update Product</button>
+            <button type="button" class="delete-btn" id="deleteBtn">Delete Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get("id");
+
+    async function loadCategories(selectedId = "") {
+      const res = await fetch("http://localhost:5000/api/categories");
+      const categories = await res.json();
+      const select = document.getElementById("category");
+
+      categories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat._id;
+        option.textContent = cat.name;
+        if (cat._id === selectedId) option.selected = true;
+        select.appendChild(option);
+      });
+    }
+
+    async function loadSuppliers(selectedId = "") {
+      const res = await fetch("http://localhost:5000/api/suppliers");
+      const suppliers = await res.json();
+      const select = document.getElementById("supplier");
+
+      suppliers.forEach(sup => {
+        const option = document.createElement("option");
+        option.value = sup._id;
+        option.textContent = sup.name;
+        if (sup._id === selectedId) option.selected = true;
+        select.appendChild(option);
+      });
+    }
+
+    async function fetchProduct() {
+      const res = await fetch(`http://localhost:5000/api/inventory/${productId}`);
+      const product = await res.json();
+
+      document.getElementById("name").value = product.name;
+      document.getElementById("image_uri").value = product.image_uri || "";
+      document.getElementById("price").value = product.price;
+      document.getElementById("description").value = product.description;
+
+      await loadCategories(product.category?._id);
+      await loadSuppliers(product.supplier?._id);
+    }
+
+    document.getElementById("editProductForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const image = document.getElementById("image_uri").value;
+      const price = document.getElementById("price").value;
+      const description = document.getElementById("description").value;
+      const category = document.getElementById("category").value;
+      const supplier = document.getElementById("supplier").value;
+
+      const response = await fetch(`http://localhost:5000/api/inventory/${productId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, image, price, description, category, supplier })
+      });
+
+      if (response.ok) {
+        alert("Product updated!");
+        window.location.href = "/inventory";
+      } else {
+        const data = await response.json();
+        alert("Failed: " + data.message);
+      }
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete this product?")) return;
+      const res = await fetch(`http://localhost:5000/api/inventory/${productId}`, { method: "DELETE" });
+
+      if (res.ok) {
+        alert("Product deleted.");
+        window.location.href = "/inventory";
+      } else {
+        const data = await res.json();
+        alert("Failed to delete: " + data.message);
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    });
+
+    fetchProduct();
+  </script>
+</body>
+</html>

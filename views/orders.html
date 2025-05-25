@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Management | NL-Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    h1 {
+      text-align: center;
+    }
+
+    .orders-table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background-color: white;
+    }
+
+    .orders-table th, .orders-table td {
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .orders-table th {
+      background-color: #f4f4f4;
+    }
+
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    .status.Placed {
+      color: #1e88e5;
+    }
+
+    .status.Delivered {
+      color: green;
+    }
+
+    .status.Cancelled {
+      color: red;
+    }
+
+    .orders-section {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- ✅ Sidebar reusable component -->
+    <div id="sidebar"></div>
+
+    <!-- Main Content -->
+    <div class="content-container">
+      <h1>Order Management</h1>
+      <section class="orders-section">
+        <table class="orders-table" id="ordersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Order ID</th>
+              <th>Customer Contact</th>
+              <th>Delivery Date</th>
+              <th>Address</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Orders will be injected here -->
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    async function fetchOrders() {
+      try {
+        const res = await fetch("http://localhost:5000/api/orders");
+        const orders = await res.json();
+
+        const tableBody = document.querySelector("#ordersTable tbody");
+        tableBody.innerHTML = "";
+
+        orders.forEach((order, index) => {
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${order._id}</td>
+            <td>${order.customerPhone || 'N/A'}</td>
+            <td>${new Date(order.deliveryDate).toLocaleDateString()}</td>
+            <td>${order.address}</td>
+            <td><span class="status ${order.status.replace(" ", "")}">${order.status}</span></td>
+          `;
+
+          tableBody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Error loading orders:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // ✅ Load sidebar component + add darkmode toggle + logout
+      await fetch("/components/sidebar.html")
+        .then(response => response.text())
+        .then(data => document.getElementById("sidebar").innerHTML = data)
+        .then(() => {
+          document.getElementById("logoutButton").addEventListener("click", async () => {
+            await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "/login";
+          });
+
+          document.getElementById("darkModeToggle").addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+          });
+
+          if (localStorage.getItem("darkMode") === "enabled") {
+            document.body.classList.add("dark-mode");
+          }
+        });
+
+      fetchOrders();
+    });
+  </script>
+</body>
+</html>
