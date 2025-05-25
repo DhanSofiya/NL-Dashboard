@@ -65,7 +65,7 @@ router.put('/delivered/:id', async (req, res) => {
 router.put('/complete/:id', async (req, res) => {
   try {
     const order = await SupplierOrder.findById(req.params.id);
-    if (!order || order.status !== 'delivered') {
+if (!order || (order.status !== 'delivered' && order.status !== 'shipped')) {
       return res.status(400).json({ message: "Order must be marked as delivered before completing" });
     }
 

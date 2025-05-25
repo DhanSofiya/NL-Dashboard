@@ -107,8 +107,10 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
       }
     });
 
-    const confirmUrl = `http://localhost:5000/api/supplier-orders/confirm/${newOrder._id}?token=${emailToken}`;
-    const shipUrl = `http://localhost:5000/api/supplier-orders/shipped/${newOrder._id}?token=${emailToken}`;
+const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+
+const confirmUrl = `${baseUrl}/api/supplier-orders/confirm/${newOrder._id}?token=${emailToken}`;
+const shipUrl = `${baseUrl}/api/supplier-orders/shipped/${newOrder._id}?token=${emailToken}`;
 
     const mailOptions = {
       from: `"NL-Dashboard Orders" <niltiva@proton.me>`,

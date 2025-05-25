@@ -45,6 +45,26 @@
       color: red;
     }
 
+    .status.pending {
+      color: orange;
+    }
+
+    .status.confirmed {
+      color: green;
+    }
+
+    .status.shipped {
+      color: #2196f3;
+    }
+
+    .status.delivered {
+      color: darkblue;
+    }
+
+    .status.completed {
+      color: #4caf50;
+    }
+
     .orders-section {
       margin-top: 40px;
     }
@@ -55,10 +75,12 @@
     <!-- ✅ Sidebar reusable component -->
     <div id="sidebar"></div>
 
-    <!-- Main Content -->
     <div class="content-container">
       <h1>Order Management</h1>
+
+      <!-- ✅ Customer Orders -->
       <section class="orders-section">
+        <h2>Customer Orders</h2>
         <table class="orders-table" id="ordersTable">
           <thead>
             <tr>
@@ -70,9 +92,25 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- Orders will be injected here -->
-          </tbody>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- ✅ Supplier Orders -->
+      <section class="orders-section">
+        <h2>Supplier Orders</h2>
+        <table class="orders-table" id="supplierOrdersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Order ID</th>
+              <th>Supplier</th>
+              <th>Products</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
         </table>
       </section>
     </div>
@@ -106,8 +144,67 @@
       }
     }
 
+    async function fetchSupplierOrders() {
+      try {
+        const res = await fetch("http://localhost:5000/api/supplier-orders");
+        const orders = await res.json();
+
+        const tableBody = document.querySelector("#supplierOrdersTable tbody");
+        tableBody.innerHTML = "";
+
+        orders.forEach((order, index) => {
+          const productList = order.products
+            .map(p => `${p.product} (x${p.quantity})`)
+            .join("<br>");
+
+          let actionBtn = "";
+          if (order.status === "shipped") {
+            actionBtn = `<br><button class="receive-btn" data-id="${order._id}">Received</button>`;
+          }
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${order._id}</td>
+            <td>${order.supplier?.name || 'N/A'}</td>
+            <td>${productList}</td>
+            <td>
+              <span class="status ${order.status}">${order.status}</span>
+              ${actionBtn}
+            </td>
+            <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+          `;
+
+          tableBody.appendChild(row);
+        });
+
+        // ✅ Add event listeners after table is built
+        document.querySelectorAll(".receive-btn").forEach(button => {
+          button.addEventListener("click", async () => {
+            const orderId = button.dataset.id;
+            const confirm = window.confirm("Mark this order as received and complete?");
+            if (!confirm) return;
+
+            try {
+              const res = await fetch(`http://localhost:5000/api/supplier-orders/complete/${orderId}`, {
+                method: "PUT"
+              });
+              const data = await res.json();
+              alert(data.message);
+              fetchSupplierOrders(); // Refresh after update
+            } catch (err) {
+              console.error("Error completing supplier order:", err);
+              alert("❌ Failed to complete supplier order.");
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error("Error loading supplier orders:", err);
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
-      // ✅ Load sidebar component + add darkmode toggle + logout
       await fetch("/components/sidebar.html")
         .then(response => response.text())
         .then(data => document.getElementById("sidebar").innerHTML = data)
@@ -129,7 +226,8 @@
           }
         });
 
-      fetchOrders();
+      await fetchOrders();
+      await fetchSupplierOrders();
     });
   </script>
 </body>
