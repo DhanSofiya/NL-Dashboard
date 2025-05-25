@@ -2,49 +2,80 @@ const express = require('express');
 const router = express.Router();
 const SupplierOrder = require('../models/SupplierOrder');
 const Product = require('../models/Product');
-const crypto = require('crypto');
+const Supplier = require('../models/Supplier');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
-// ✅ Confirm order (from email link)
-router.get('/confirm/:id', async (req, res) => {
+// ✅ Auto-progress status when triggered by shared email button
+router.get('/next/:id', async (req, res) => {
   try {
     const { token } = req.query;
-    const order = await SupplierOrder.findById(req.params.id);
+    const order = await SupplierOrder.findById(req.params.id).populate('supplier');
+
     if (!order || order.emailToken !== token) {
-      return res.status(403).send("❌ Invalid or expired confirmation link.");
+      return res.sendStatus(403);
     }
 
-    order.status = 'confirmed';
-    order.updatedAt = Date.now();
-    await order.save();
+    const currentStatus = order.status;
 
-    res.send("✅ Order has been confirmed. Thank you.");
+    if (currentStatus === 'pending') {
+      order.status = 'confirmed';
+      order.updatedAt = Date.now();
+      await order.save();
+
+      // Optional: send email prompting to ship
+      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+      const shipUrl = `${baseUrl}/trigger-action.html?id=${order._id}&token=${order.emailToken}`;
+
+      const transporter = nodemailer.createTransport({
+        service: 'SendGrid',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+
+      const mailOptions = {
+        from: `"NL-Dashboard Orders" <niltiva@proton.me>`,
+        to: order.supplier.email,
+        subject: `✅ Order Confirmed – Ready to Ship?`,
+        html: `
+          <p>Hi ${order.supplier.name},</p>
+          <p>You confirmed the order. Please mark it as shipped when ready.</p>
+          <p>
+            <a href="${shipUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
+              display:inline-block;
+              padding:12px 20px;
+              background-color:#2196f3;
+              color:#ffffff;
+              text-decoration:none;
+              font-weight:bold;
+              border-radius:5px;
+              font-family:Arial,sans-serif;
+            ">📦 Mark as Shipped</a>
+          </p>
+          <p>Thank you,<br>NL-Dashboard Team</p>
+        `
+      };
+
+      transporter.sendMail(mailOptions, err => {
+        if (err) console.error("❌ Failed to send ship prompt:", err);
+      });
+
+    } else if (currentStatus === 'confirmed') {
+      order.status = 'shipped';
+      order.updatedAt = Date.now();
+      await order.save();
+    }
+
+    res.sendStatus(204); // success, no content
   } catch (error) {
-    console.error("❌ Error confirming supplier order:", error);
-    res.status(500).send("❌ Failed to confirm order.");
+    console.error("❌ Error updating supplier order status:", error);
+    res.sendStatus(500);
   }
 });
 
-// ✅ Mark as shipped (from email link)
-router.get('/shipped/:id', async (req, res) => {
-  try {
-    const { token } = req.query;
-    const order = await SupplierOrder.findById(req.params.id);
-    if (!order || order.emailToken !== token) {
-      return res.status(403).send("❌ Invalid or expired shipping link.");
-    }
-
-    order.status = 'shipped';
-    order.updatedAt = Date.now();
-    await order.save();
-
-    res.send("📦 Order has been marked as shipped.");
-  } catch (error) {
-    console.error("❌ Error marking order as shipped:", error);
-    res.status(500).send("❌ Failed to update shipping status.");
-  }
-});
-
-// ✅ Admin: Mark as delivered (manually from site)
+// ✅ Admin: Mark as delivered (optional/manual)
 router.put('/delivered/:id', async (req, res) => {
   try {
     const order = await SupplierOrder.findById(req.params.id);
@@ -65,12 +96,12 @@ router.put('/delivered/:id', async (req, res) => {
 router.put('/complete/:id', async (req, res) => {
   try {
     const order = await SupplierOrder.findById(req.params.id);
-if (!order || (order.status !== 'delivered' && order.status !== 'shipped')) {
-      return res.status(400).json({ message: "Order must be marked as delivered before completing" });
+    if (!order || (order.status !== 'delivered' && order.status !== 'shipped')) {
+      return res.status(400).json({ message: "Order must be marked as shipped before completing" });
     }
 
     for (const item of order.products) {
-      const product = await Product.findOne({ name: item.product, supplier: order.supplier });
+      const product = await Product.findById(item.product);
       if (product) {
         product.stock += item.quantity;
         await product.save();
@@ -88,12 +119,14 @@ if (!order || (order.status !== 'delivered' && order.status !== 'shipped')) {
   }
 });
 
-// ✅ GET all supplier orders (for dashboard display)
+// ✅ GET all supplier orders (for dashboard)
 router.get('/', async (req, res) => {
   try {
-    const orders = await SupplierOrder.find()
-      .populate('supplier', 'name email')
-      .sort({ createdAt: -1 });
+const orders = await SupplierOrder.find()
+  .populate('supplier', 'name email')
+  .populate('products.product', 'name')
+  .sort({ createdAt: -1 });
+
     res.json(orders);
   } catch (error) {
     console.error("❌ Error fetching supplier orders:", error);

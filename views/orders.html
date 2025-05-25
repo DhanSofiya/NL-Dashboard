@@ -154,7 +154,7 @@
 
         orders.forEach((order, index) => {
           const productList = order.products
-            .map(p => `${p.product} (x${p.quantity})`)
+          .map(p => `${p.product?.name || p.product} (x${p.quantity})`)
             .join("<br>");
 
           let actionBtn = "";

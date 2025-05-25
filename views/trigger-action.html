@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Processing Order...</title>
+</head>
+<body>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const token = params.get("token");
+
+    if (id && token) {
+      fetch(`/api/supplier-orders/next/${id}?token=${token}`, { method: "GET" })
+        .finally(() => setTimeout(() => window.close(), 500));
+    } else {
+      setTimeout(() => window.close(), 500); // Close anyway
+    }
+  </script>
+</body>
+</html>

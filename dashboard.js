@@ -96,6 +96,11 @@ app.get('/orders', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'orders.html'));
 });
 
+// ✅ NEW: Supplier email button redirect page (auto-close window)
+app.get('/trigger-action.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'trigger-action.html'));
+});
+
 // 📤 Image Upload
 app.post('/uploadImage', upload.single('image'), (req, res) => {
   if (req.file) {

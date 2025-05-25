@@ -154,7 +154,7 @@
         if (Array.isArray(data) && data.length > 0) {
           data.forEach(product => {
             const option = document.createElement("option");
-            option.value = product.name;
+            option.value = product._id; // ✅ USE OBJECTID not name
             option.textContent = product.name;
             productSelect.appendChild(option);
           });
@@ -216,12 +216,12 @@
 
     document.getElementById("sendOrderForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const product = document.getElementById("product").value.trim();
+      const product = document.getElementById("product").value.trim(); // ✅ this is now _id
       const quantity = document.getElementById("quantity").value.trim();
       const notes = document.getElementById("notes").value.trim();
 
       if (!product || !quantity) {
-        alert("Product name and quantity are required.");
+        alert("Product and quantity are required.");
         return;
       }
 
@@ -277,7 +277,7 @@
         });
 
       await loadSupplierDetails();
-      await loadSupplierProducts(); // ✅ Load products for dropdown
+      await loadSupplierProducts(); // ✅ now loads ObjectId
     });
   </script>
 </body>

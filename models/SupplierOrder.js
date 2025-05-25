@@ -9,13 +9,21 @@ const SupplierOrderSchema = new mongoose.Schema({
   },
   products: [
     {
-      product: { type: String, required: true }, // could be changed to ObjectId if needed
-      quantity: { type: Number, required: true }
+      product: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Product', 
+        required: true 
+      },
+      quantity: { 
+        type: Number, 
+        required: true,
+        min: 1 
+      }
     }
   ],
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'completed'],
+    enum: ['pending', 'confirmed', 'shipped', 'completed'],
     default: 'pending'
   },
   emailToken: {
