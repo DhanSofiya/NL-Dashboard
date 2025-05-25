@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inventory Management | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css"/>
+  <script defer src="/js/orderSidebar.js"></script>
   <style>
     h1 {
       text-align: center;
@@ -63,8 +64,26 @@
     </div>
   </div>
 
+  <!-- ✅ Sidebar component injected here -->
+  <div id="sidebarComponent"></div>
+
   <script>
+    async function loadSidebarComponent() {
+      const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
+      document.getElementById("sidebarComponent").innerHTML = sidebar;
+
+      // ✅ Bind close button AFTER sidebar is injected
+      const closeBtn = document.getElementById("closeSidebarBtn");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          document.getElementById("orderSidebar").classList.remove("sidebar-open");
+        });
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
+      await loadSidebarComponent();
+
       const inventoryGrid = document.getElementById("inventoryGrid");
 
       const darkModeToggle = document.getElementById("darkModeToggle");
@@ -110,7 +129,7 @@
               <p><strong>Stock:</strong> ${product.stock ?? 10}</p>
 
               <div class="action-buttons">
-                <button class="order-stock-btn" onclick="orderStock('${supplierId}')">Order Stock</button>
+                <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
                 <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
               </div>
             `;
@@ -121,11 +140,6 @@
           inventoryGrid.innerHTML = "<p>Failed to load inventory.</p>";
           console.error(err);
         }
-      };
-
-      window.orderStock = (supplierId) => {
-        if (!supplierId) return alert("Supplier ID not found!");
-      window.location.href = `/supplierDetails?id=${supplierId}`;
       };
 
       window.editProductInfo = (id) => {

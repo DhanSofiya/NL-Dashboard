@@ -46,6 +46,8 @@ app.use('/api/suppliers', require('./routes/suppliers'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/finance', require('./routes/finance'));
 app.use('/api/supplier-orders', require('./routes/supplierOrders'));
+app.use('/components', express.static(path.join(__dirname, 'components')));
+
 
 // 📄 VIEWS ROUTES
 app.get('/login', (req, res) => {
