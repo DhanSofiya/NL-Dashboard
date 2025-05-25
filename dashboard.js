@@ -45,6 +45,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/suppliers', require('./routes/suppliers'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/finance', require('./routes/finance'));
+app.use('/api/supplier-orders', require('./routes/supplierOrders'));
 
 // 📄 VIEWS ROUTES
 app.get('/login', (req, res) => {

@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Supplier = require('../models/Supplier');
-const Product = require('../models/Product'); // ✅ Added
+const Product = require('../models/Product');
+const SupplierOrder = require('../models/SupplierOrder');
 const nodemailer = require('nodemailer');
-require('dotenv').config();  // Ensure env variables are loaded
+const crypto = require('crypto');
+require('dotenv').config();  // Load .env variables
 
 // ✅ GET all suppliers
 router.get('/', async (req, res) => {
@@ -74,7 +76,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ✅ SEND ORDER EMAIL to supplier
+// ✅ SEND ORDER EMAIL + CREATE ORDER RECORD
 router.post('/:id/sendOrderEmail', async (req, res) => {
   try {
     const { product, quantity, notes } = req.body;
@@ -85,32 +87,69 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
     const supplier = await Supplier.findById(req.params.id);
     if (!supplier) return res.status(404).json({ message: "Supplier not found" });
 
+    const emailToken = crypto.randomBytes(16).toString('hex');
+
+    // ✅ Save order in SupplierOrder collection
+    const newOrder = new SupplierOrder({
+      supplier: supplier._id,
+      products: [{ product, quantity }],
+      status: 'pending',
+      emailToken
+    });
+    await newOrder.save();
+
+    // ✅ Email transporter
     const transporter = nodemailer.createTransport({
       service: 'SendGrid',
       auth: {
-        user: process.env.EMAIL_USER, // literally "apikey"
-        pass: process.env.EMAIL_PASS  // your SendGrid API key
+        user: process.env.EMAIL_USER, // "apikey"
+        pass: process.env.EMAIL_PASS
       }
     });
 
+    const confirmUrl = `http://localhost:5000/api/supplier-orders/confirm/${newOrder._id}?token=${emailToken}`;
+    const shipUrl = `http://localhost:5000/api/supplier-orders/shipped/${newOrder._id}?token=${emailToken}`;
+
     const mailOptions = {
-      from: `"NL-Dashboard Orders" <niltiva@proton.me>`, 
-      replyTo: 'aqua.star.d@gmail.com',                  
+      from: `"NL-Dashboard Orders" <niltiva@proton.me>`,
+      replyTo: 'aqua.star.d@gmail.com',
       to: supplier.email,
       subject: `Order Request from NL-Dashboard`,
-      text: `
-Hi ${supplier.name},
-
-We would like to place an order:
-
-Product: ${product}
-Quantity: ${quantity}
-Notes: ${notes || "None"}
-
-Please reply to this email to confirm.
-
-Thank you,
-NL-Dashboard Team
+      html: `
+        <p>Hi ${supplier.name},</p>
+        <p>We would like to place an order:</p>
+        <ul>
+          <li><strong>Product:</strong> ${product}</li>
+          <li><strong>Quantity:</strong> ${quantity}</li>
+          <li><strong>Notes:</strong> ${notes || "None"}</li>
+        </ul>
+        <p>
+          Please confirm this order:<br>
+          <a href="${confirmUrl}" style="
+            display:inline-block;
+            padding:12px 20px;
+            background-color:#4caf50;
+            color:#ffffff;
+            text-decoration:none;
+            font-weight:bold;
+            border-radius:5px;
+            font-family:Arial,sans-serif;
+          ">✔ Confirm Order</a>
+        </p>
+        <p>
+          Once shipped, please click below:<br>
+          <a href="${shipUrl}" style="
+            display:inline-block;
+            padding:12px 20px;
+            background-color:#2196f3;
+            color:#ffffff;
+            text-decoration:none;
+            font-weight:bold;
+            border-radius:5px;
+            font-family:Arial,sans-serif;
+          ">📦 Mark as Shipped</a>
+        </p>
+        <p>Thank you,<br>NL-Dashboard Team</p>
       `
     };
 
@@ -119,7 +158,7 @@ NL-Dashboard Team
         console.error("❌ Error sending email:", error);
         return res.status(500).json({ message: "Failed to send order email" });
       }
-      res.json({ message: "Order email sent successfully" });
+      res.json({ message: "Order email sent and order recorded successfully." });
     });
 
   } catch (error) {
@@ -128,7 +167,7 @@ NL-Dashboard Team
   }
 });
 
-// ✅ GET all products linked to a supplier (for product dropdown)
+// ✅ GET all products linked to a supplier (for dropdowns)
 router.get('/:id/products', async (req, res) => {
   try {
     const products = await Product.find({ supplier: req.params.id }).select('name');
