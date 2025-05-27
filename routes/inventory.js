@@ -40,13 +40,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ✅ POST create product (set stock to 10 by default)
+// ✅ POST create product (stock set to 0 by default)
 router.post('/', async (req, res) => {
   try {
-    const { name, image, price, ar_uri, description, category, supplier } = req.body;
+    const { name, image, price, supplier_price, ar_uri, description, category, supplier } = req.body;
 
-    if (!name || !image || !price || !description || !category || !supplier) {
-      return res.status(400).json({ message: 'All fields including category and supplier are required' });
+    if (!name || !image || !price || !supplier_price || !description || !category || !supplier) {
+      return res.status(400).json({ message: 'All fields including supplier price are required' });
     }
 
     const categoryExists = await Category.findById(category);
@@ -55,11 +55,12 @@ router.post('/', async (req, res) => {
     const supplierExists = await Supplier.findById(supplier);
     if (!supplierExists) return res.status(400).json({ message: 'Invalid supplier ID' });
 
-    const stock = 0; // ✅ Force stock to 10
+    const stock = 0;
     const newProduct = new Product({
       name,
-      image_uri: image,     
+      image_uri: image,
       price,
+      supplier_price,
       ar_uri,
       description,
       category,
@@ -78,14 +79,15 @@ router.post('/', async (req, res) => {
 // ✅ PUT update product
 router.put('/:id', async (req, res) => {
   try {
-    const { name, image, price, ar_uri, description, category, supplier } = req.body;
+    const { name, image, price, supplier_price, ar_uri, description, category, supplier } = req.body;
 
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
         name,
-        image_uri: image,    
+        image_uri: image,
         price,
+        supplier_price,
         ar_uri,
         description,
         category,

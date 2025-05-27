@@ -43,19 +43,7 @@
 </head>
 <body>
   <div class="wrapper">
-    <aside class="sidebar-container">
-      <h2>Dashboard</h2>
-      <nav>
-        <ul>
-          <li><a href="/admin-users">👤 Users</a></li>
-          <li><a href="/inventory">📦 Inventory</a></li>
-          <li><a href="/suppliers">🚚 Suppliers</a></li>
-          <li><a href="/finance">💰 Finance</a></li>
-          <li><a href="/orders">🛒 Orders</a></li>
-        </ul>
-      </nav>
-      <button id="logoutButton" class="logout-button">Logout</button>
-    </aside>
+    <div id="sidebarComponent"></div>
 
     <div class="content-container">
       <h1>Edit Product</h1>
@@ -71,7 +59,10 @@
           <select id="supplier" required></select>
 
           <label>Price (RM)</label>
-          <input type="number" id="price" min="0" required />
+          <input type="number" id="price" min="0" step="0.01" required />
+
+          <label>Supplier Price (RM)</label>
+          <input type="number" id="supplier_price" min="0" step="0.01" required />
 
           <label>Image URL</label>
           <input type="url" id="image_uri" required />
@@ -91,6 +82,33 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get("id");
+
+    async function loadSidebarComponent() {
+      const html = await fetch("/components/sidebar.html").then(res => res.text());
+      document.getElementById("sidebarComponent").innerHTML = html;
+
+      const logoutBtn = document.getElementById("logoutButton");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        });
+      }
+
+      const darkToggle = document.getElementById("darkModeToggle");
+      if (darkToggle) {
+        darkToggle.addEventListener("click", () => {
+          document.body.classList.toggle("dark-mode");
+          localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+        });
+
+        if (localStorage.getItem("darkMode") === "enabled") {
+          document.body.classList.add("dark-mode");
+        }
+      }
+    }
 
     async function loadCategories(selectedId = "") {
       const res = await fetch("http://localhost:5000/api/categories");
@@ -126,7 +144,8 @@
 
       document.getElementById("name").value = product.name;
       document.getElementById("image_uri").value = product.image_uri || "";
-      document.getElementById("price").value = product.price;
+      document.getElementById("price").value = product.price?.toFixed(2) || "0.00";
+      document.getElementById("supplier_price").value = product.supplier_price?.toFixed(2) || "0.00";
       document.getElementById("description").value = product.description;
 
       await loadCategories(product.category?._id);
@@ -137,7 +156,8 @@
       e.preventDefault();
       const name = document.getElementById("name").value;
       const image = document.getElementById("image_uri").value;
-      const price = document.getElementById("price").value;
+      const price = parseFloat(document.getElementById("price").value);
+      const supplier_price = parseFloat(document.getElementById("supplier_price").value);
       const description = document.getElementById("description").value;
       const category = document.getElementById("category").value;
       const supplier = document.getElementById("supplier").value;
@@ -145,7 +165,7 @@
       const response = await fetch(`http://localhost:5000/api/inventory/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, image, price, description, category, supplier })
+        body: JSON.stringify({ name, image, price, supplier_price, description, category, supplier })
       });
 
       if (response.ok) {
@@ -170,13 +190,7 @@
       }
     });
 
-    document.getElementById("logoutButton").addEventListener("click", async () => {
-      await fetch("http://localhost:5000/auth/logout", { method: "POST" });
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-    });
-
+    loadSidebarComponent();
     fetchProduct();
   </script>
 </body>

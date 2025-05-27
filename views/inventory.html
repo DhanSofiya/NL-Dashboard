@@ -99,6 +99,8 @@
         const supplierText = product.supplier?.name || "Unknown";
         const supplierId = product.supplier?._id || "";
         const imagePath = product.image_uri || "/images/placeholder.jpg";
+        const price = product.price?.toFixed(2) ?? "0.00";
+        const supplierPrice = product.supplier_price?.toFixed(2) ?? "0.00";
 
         const card = document.createElement("div");
         card.classList.add("supplier-card");
@@ -107,7 +109,8 @@
           <h3>${product.name}</h3>
           <p><strong>Category:</strong> ${categoryText}</p>
           <p><strong>Supplier:</strong> ${supplierText}</p>
-          <p><strong>Price:</strong> RM ${product.price}</p>
+          <p><strong>Price:</strong> RM ${price}</p>
+          <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
           <p><strong>Stock:</strong> ${product.stock ?? 0}</p>
           <div class="action-buttons">
             <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
