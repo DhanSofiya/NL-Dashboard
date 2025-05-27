@@ -78,58 +78,10 @@ body {
 }
 
 /* ============================ SUPPLIER GRID STYLING ============================ */
-.supplier-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: flex-start;
-    margin-top: 20px;
-}
-
-.supplier-card {
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    width: 250px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-}
 
 .supplier-card:hover {
     transform: scale(1.05);
 }
-
-.supplier-card h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-.supplier-card p {
-    font-size: 14px;
-    margin-bottom: 15px;
-    color: #7f8c8d;
-}
-
-.supplier-card img {
-    width: 100%; /* Ensures image fits inside the card */
-    max-height: 300px; /* Limits the image height */
-    object-fit: cover; /* Maintains aspect ratio */
-}
-
-/* Add to bottom of styles.css */
-.supplier-card h3 {
-    color: #222 !important;
-    background: rgba(255,255,255,0.8);
-    padding: 4px 8px;
-    border-radius: 5px;
-    display: inline-block;
-    margin: 0 auto;
-    font-size: 1.1rem;
-    text-align: center;
-}
-
 
 /* ============================ ADD SUPPLIER BUTTON STYLING ============================ */
 .add-supplier-button {
@@ -347,15 +299,6 @@ input, select, button {
         width: 100%;
     }
 
-    .supplier-grid {
-        flex-direction: column;
-    }
-
-    .supplier-card {
-        width: 100%;
-        margin-bottom: 20px;
-    }
-
     .order-stock-container {
         width: 100%;
         margin-left: 0;
@@ -533,39 +476,12 @@ body.dark-mode .download-button {
       justify-content: center;
     }
 
-    .supplier-card {
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      padding: 1rem;
-      width: 250px;
-      text-align: center;
-    }
-
-    .supplier-card img {
-      width: 100%;
-      height: 250px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-    }
-
-    .supplier-card h3 {
-      margin: 0.5rem 0 0.25rem;
-    }
-
-    .supplier-card p {
-      margin: 0.25rem 0;
-      font-size: 0.9rem;
-      color: #444;
-    }
-
-    .action-buttons {
-      margin-top: 0.75rem;
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-    }
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
 
     .order-stock-btn {
       background-color: #28d219;
@@ -574,22 +490,6 @@ body.dark-mode .download-button {
       padding: 5px 10px;
       border-radius: 5px;
       cursor: pointer;
-    }
-
-    .add-card {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 1rem;
-      background-color: #6fa4c7;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      height: 390px;
-      width: 250px;
     }
 
     .add-card:hover {
@@ -604,35 +504,37 @@ body.dark-mode .download-button {
       justify-content: center;
     }
 
-    .supplier-card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      padding: 1rem;
-      width: 250px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+.supplier-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+   min-height: 390px;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+}
 
-    .supplier-card img {
-      width: 100%;
-      max-height: 150px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-    }
+.supplier-card img {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
 
-    .supplier-card h3 {
-      margin: 0.5rem 0 0.25rem;
-    }
+.supplier-card h3 {
+  margin: 0.5rem 0;
+  color: #333;
+}
 
-    .supplier-card p {
-      font-size: 0.9rem;
-      color: #555;
-      margin: 0.25rem 0;
-    }
+.supplier-card p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0.25rem 0;
+}
 
     .supplier-card button {
       margin-top: 0.5rem;
