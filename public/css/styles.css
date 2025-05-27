@@ -1010,7 +1010,7 @@ body.dark-mode .supplier-card h3 {
   font-size: 1rem;
   padding: 0 12px;
   border-radius: 6px;
-  border: 1px solid #6d4848;
+  border: 1px solid #000000;
   box-sizing: border-box;
   line-height: normal;
   display: flex;
@@ -1021,13 +1021,22 @@ body.dark-mode .supplier-card h3 {
 }
 
 .inventory-controls select {
-  margin-top: 4.5px; /* adjust as needed */
+  margin-top: 5px; /* adjust as needed */
+}
+
+.stat-card.active {
+  outline: 1px solid #000;
+  color: #000;
 }
 
 /* Dark Mode */
 body.dark-mode .inventory-controls input,
 body.dark-mode .inventory-controls select {
-  background-color: #2b2b2b;
+  background-color: #000000;
   color: #fff;
-  border: 1px solid #666;
+}
+
+body.dark-mode .stat-card.active {
+  outline: 2px solid #fff;
+  color: #000;
 }

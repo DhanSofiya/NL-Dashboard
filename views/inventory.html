@@ -6,6 +6,13 @@
   <title>Inventory Management | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css"/>
   <script defer src="/js/orderSidebar.js"></script>
+  <style>
+    .stat-card.active {
+      border: 2px solid #000;
+      box-shadow: 0 0 0 3px #999 inset;
+      transform: scale(1.02);
+    }
+  </style>
 </head>
 <body>
   <div class="wrapper">
@@ -134,6 +141,14 @@
       renderProducts(filtered);
     }
 
+    function setActiveStatCard(cardId) {
+      document.querySelectorAll('.inventory-stats .stat-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      const active = document.getElementById(cardId);
+      if (active) active.classList.add('active');
+    }
+
     window.editProductInfo = (id) => {
       window.location.href = `/editProduct.html?id=${id}`;
     };
@@ -171,19 +186,21 @@
       document.getElementById("searchInput").addEventListener("input", filterAndRender);
       document.getElementById("sortSelect").addEventListener("change", filterAndRender);
 
-      // Stat card interaction
       document.getElementById("totalProducts").addEventListener("click", () => {
         renderProducts(allProducts);
+        setActiveStatCard("totalProducts");
       });
 
       document.getElementById("outOfStock").addEventListener("click", () => {
         const outOfStock = allProducts.filter(p => p.stock === 0);
         renderProducts(outOfStock);
+        setActiveStatCard("outOfStock");
       });
 
       document.getElementById("lowStock").addEventListener("click", () => {
         const lowStock = allProducts.filter(p => p.stock > 0 && p.stock < 5);
         renderProducts(lowStock);
+        setActiveStatCard("lowStock");
       });
 
       document.getElementById("totalCategories").addEventListener("click", () => {
@@ -194,6 +211,7 @@
         const filtered = allProducts.filter(p => p.category?.name === selected);
 
         renderProducts(filtered);
+        setActiveStatCard("totalCategories");
         categoryIndex = (categoryIndex + 1) % categories.length;
       });
 
@@ -205,6 +223,7 @@
         const filtered = allProducts.filter(p => p.supplier?.name === selected);
 
         renderProducts(filtered);
+        setActiveStatCard("totalSuppliers");
         supplierIndex = (supplierIndex + 1) % suppliers.length;
       });
     });

@@ -26,6 +26,9 @@ const SupplierOrderSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'shipped', 'completed'],
     default: 'pending'
   },
+  deliveryDate: {
+    type: Date  // ✅ New field for expected delivery
+  },
   emailToken: {
     type: String,
     required: true,

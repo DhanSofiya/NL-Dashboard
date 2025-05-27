@@ -1,7 +1,7 @@
 // public/js/orderSidebar.js
 
 // Global in-memory state to track supplier orders
-let supplierOrders = {}; // { supplierId: { name, email, products: [{ id, name, quantity }], notes: "" } }
+let supplierOrders = {}; // { supplierId: { name, email, products: [{ id, name, quantity }], notes: "", deliveryDate: "" } }
 const MAX_SUPPLIERS = 3;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -35,7 +35,8 @@ function orderStock(supplierId, productId, productName) {
           name: supplier.name,
           email: supplier.email,
           products: [],
-          notes: ""
+          notes: "",
+          deliveryDate: ""
         };
         addProductToSupplier(supplierId, productId, productName);
         openSidebar();
@@ -78,6 +79,12 @@ function updateNotes(supplierId, value) {
   }
 }
 
+function updateDeliveryDate(supplierId, value) {
+  if (supplierOrders[supplierId]) {
+    supplierOrders[supplierId].deliveryDate = value;
+  }
+}
+
 async function sendOrder(supplierId) {
   const supplier = supplierOrders[supplierId];
   if (!supplier || supplier.products.length === 0) return;
@@ -87,7 +94,8 @@ async function sendOrder(supplierId) {
       productId: p.id,
       quantity: p.quantity
     })),
-    notes: supplier.notes
+    notes: supplier.notes,
+    deliveryDate: supplier.deliveryDate
   };
 
   try {
@@ -134,6 +142,8 @@ function renderSidebar() {
       <p><strong>Email:</strong> ${supplier.email}</p>
       ${productList}
       <textarea placeholder="Optional notes" rows="3" oninput="updateNotes('${supplierId}', this.value)">${supplier.notes}</textarea>
+      <label><strong>Delivery Date:</strong></label>
+      <input type="date" value="${supplier.deliveryDate}" onchange="updateDeliveryDate('${supplierId}', this.value)" required />
       <button class="send-btn" onclick="sendOrder('${supplierId}')">✉️ Send Order</button>
       <hr/>
     `;

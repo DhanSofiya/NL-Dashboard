@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
     const stock = 0; // ✅ Force stock to 10
     const newProduct = new Product({
       name,
-      image_uri: image,      // ✅ map image to image_uri
+      image_uri: image,     
       price,
       ar_uri,
       description,
@@ -84,7 +84,7 @@ router.put('/:id', async (req, res) => {
       req.params.id,
       {
         name,
-        image_uri: image,     // ✅ map image to image_uri
+        image_uri: image,    
         price,
         ar_uri,
         description,

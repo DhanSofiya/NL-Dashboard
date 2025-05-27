@@ -80,7 +80,7 @@ router.delete('/:id', async (req, res) => {
 // ✅ POST /sendOrderEmail → Single product order (kept for backward compatibility)
 router.post('/:id/sendOrderEmail', async (req, res) => {
   try {
-    const { product, quantity, notes } = req.body;
+  const { product, quantity, notes, deliveryDate } = req.body;
     if (!product || !quantity) {
       return res.status(400).json({ message: "Product and quantity are required" });
     }
@@ -95,12 +95,13 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
 
     const emailToken = crypto.randomBytes(16).toString('hex');
 
-    const newOrder = new SupplierOrder({
-      supplier: supplier._id,
-      products: [{ product: foundProduct._id, quantity }],
-      status: 'pending',
-      emailToken
-    });
+const newOrder = new SupplierOrder({
+  supplier: supplier._id,
+  products: [{ product: foundProduct._id, quantity }],
+  status: 'pending',
+  emailToken,
+  deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined
+});
 
     await newOrder.save();
 
@@ -115,37 +116,41 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
     const nextActionUrl = `${baseUrl}/trigger-action.html?id=${newOrder._id}&token=${emailToken}`;
 
-    const mailOptions = {
-      from: `"NL-Dashboard Orders" <dhansothefi@gmail.com>`,
-      replyTo: 'aqua.star.d@gmail.com',
-      to: supplier.email,
-      subject: `🛒 New Order from NL-Dashboard – Please Confirm`,
-      html: `
-        <p>Hi ${supplier.name},</p>
-        <p>We would like to place an order:</p>
-        <ul>
-          <li><strong>Product:</strong> ${foundProduct.name}</li>
-          <li><strong>Quantity:</strong> ${quantity}</li>
-          <li><strong>Notes:</strong> ${notes || "None"}</li>
-        </ul>
-        <p>
-          Please confirm this order by clicking the button below:
-        </p>
-        <p>
-          <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
-            display:inline-block;
-            padding:12px 20px;
-            background-color:#4caf50;
-            color:#ffffff;
-            text-decoration:none;
-            font-weight:bold;
-            border-radius:5px;
-            font-family:Arial,sans-serif;
-          ">✅ Confirm Order</a>
-        </p>
-        <p>Thank you,<br>NL-Dashboard Team</p>
-      `
-    };
+const mailOptions = {
+  from: `"NL-Dashboard Orders" <dhansothefi@gmail.com>`,
+  replyTo: 'aqua.star.d@gmail.com',
+  to: supplier.email,
+  subject: `🛒 New Order from NL-Dashboard – Please Confirm`,
+  html: `
+    <p>Hi ${supplier.name},</p>
+    <p>We would like to place an order:</p>
+    <ul>
+      <li><strong>Product:</strong> ${foundProduct.name}</li>
+      <li><strong>Quantity:</strong> ${quantity}</li>
+      <li><strong>Notes:</strong> ${notes || "None"}</li>
+    </ul>
+    <p>
+      We kindly request that the order be delivered before 
+      <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.
+    </p>
+    <p>
+      Please confirm this order by clicking the button below:
+    </p>
+    <p>
+      <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
+        display:inline-block;
+        padding:12px 20px;
+        background-color:#4caf50;
+        color:#ffffff;
+        text-decoration:none;
+        font-weight:bold;
+        border-radius:5px;
+        font-family:Arial,sans-serif;
+      ">✅ Confirm Order</a>
+    </p>
+    <p>Thank you,<br>NL-Dashboard Team</p>
+  `
+};
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
@@ -164,7 +169,7 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
 // ✅ POST /sendBulkOrderEmail → Multi-product order in one email
 router.post('/:id/sendBulkOrderEmail', async (req, res) => {
   try {
-    const { products, notes } = req.body;
+  const { products, notes, deliveryDate } = req.body;
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "At least one product is required" });
     }
@@ -186,15 +191,17 @@ router.post('/:id/sendBulkOrderEmail', async (req, res) => {
 
     const emailToken = crypto.randomBytes(16).toString('hex');
 
-    const newOrder = new SupplierOrder({
-      supplier: supplier._id,
-      products: populatedProducts.map(p => ({
-        product: p.product,
-        quantity: p.quantity
-      })),
-      status: 'pending',
-      emailToken
-    });
+const newOrder = new SupplierOrder({
+  supplier: supplier._id,
+  products: populatedProducts.map(p => ({
+    product: p.product,
+    quantity: p.quantity
+  })),
+  status: 'pending',
+  emailToken,
+  deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined
+});
+
 
     await newOrder.save();
 
@@ -213,33 +220,37 @@ router.post('/:id/sendBulkOrderEmail', async (req, res) => {
       .map(p => `<li><strong>${p.name}</strong> – Quantity: ${p.quantity}</li>`)
       .join("");
 
-    const mailOptions = {
-      from: `"NL-Dashboard Orders" <niltiva@proton.me>`,
-      to: supplier.email,
-      subject: `🛒 NL-Dashboard Order – Multiple Items`,
-      html: `
-        <p>Hi ${supplier.name},</p>
-        <p>We would like to place an order for the following items:</p>
-        <ul>${productListHTML}</ul>
-        <p><strong>Notes:</strong> ${notes || "None"}</p>
-        <p>
-          Please confirm this order by clicking the button below:
-        </p>
-        <p>
-          <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
-            display:inline-block;
-            padding:12px 20px;
-            background-color:#4caf50;
-            color:#ffffff;
-            text-decoration:none;
-            font-weight:bold;
-            border-radius:5px;
-            font-family:Arial,sans-serif;
-          ">✅ Confirm Order</a>
-        </p>
-        <p>Thank you,<br>NL-Dashboard Team</p>
-      `
-    };
+const mailOptions = {
+  from: `"NL-Dashboard Orders" <niltiva@proton.me>`,
+  to: supplier.email,
+  subject: `🛒 NL-Dashboard Order – Multiple Items`,
+  html: `
+    <p>Hi ${supplier.name},</p>
+    <p>We would like to place an order for the following items:</p>
+    <ul>${productListHTML}</ul>
+    <p><strong>Notes:</strong> ${notes || "None"}</p>
+    <p>
+      We kindly request that the order be delivered before 
+      <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.
+    </p>
+    <p>
+      Please confirm this order by clicking the button below:
+    </p>
+    <p>
+      <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
+        display:inline-block;
+        padding:12px 20px;
+        background-color:#4caf50;
+        color:#ffffff;
+        text-decoration:none;
+        font-weight:bold;
+        border-radius:5px;
+        font-family:Arial,sans-serif;
+      ">✅ Confirm Order</a>
+    </p>
+    <p>Thank you,<br>NL-Dashboard Team</p>
+  `
+};
 
     transporter.sendMail(mailOptions, (error) => {
       if (error) {
