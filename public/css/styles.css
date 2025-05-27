@@ -1040,3 +1040,228 @@ body.dark-mode .stat-card.active {
   outline: 2px solid #fff;
   color: #000;
 }
+
+/* Individual product entry inside the card */
+.order-card .product-entry {
+  margin-bottom: 8px;
+}
+
+/* Display each detail clearly in product entry */
+.order-card .product-entry div {
+  margin: 2px 0;
+}
+
+/* Display total at bottom of product list */
+.order-card .order-total {
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+/* ----------------------------------------------
+   Order Card Layout (for Supplier Orders section)
+------------------------------------------------*/
+
+.order-card {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  color: #222;
+  font-size: 14px;
+}
+
+/* Delete button (top-right corner) */
+.order-card .order-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  background-color: red;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  line-height: 1;
+  z-index: 1;
+}
+
+/* Product section */
+.order-card .order-products {
+  margin-top: 16px;
+  margin-right: 28px;
+  margin-bottom: 10px;
+}
+
+/* Product line layout */
+.order-card .product-entry {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* Each product detail block */
+.order-card .product-entry div {
+  flex: 1 1 180px;
+  min-width: 120px;
+  margin: 2px 0;
+}
+
+/* Total cost display */
+.order-card .order-total {
+  font-weight: bold;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+/* ----------------------------------------------
+   Status & Date Alignment
+------------------------------------------------*/
+
+/* Status and date row */
+.order-card .order-status {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+/* Required/Updated dates */
+.order-card .order-dates {
+  font-size: 13px;
+  color: #444;
+}
+
+/* Status pill styling */
+.order-card .status {
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 20px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------
+   Status Color Classes (Light Mode)
+------------------------------------------------*/
+
+.status.pending {
+  background-color: #ffecb3;
+  color: #ff9800;
+}
+
+.status.confirmed {
+  background-color: #d0f0d0;
+  color: #388e3c;
+}
+
+.status.shipped {
+  background-color: #bbdefb;
+  color: #1976d2;
+}
+
+.status.completed {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+/* ----------------------------------------------
+   Supplier Info Section
+------------------------------------------------*/
+
+.order-card .order-supplier {
+  margin-top: 6px;
+}
+
+/* ----------------------------------------------
+   Action Buttons
+------------------------------------------------*/
+
+.order-card .order-actions {
+  margin-top: 10px;
+}
+
+.order-card .receive-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.order-card .receive-btn:hover {
+  background-color: #43a047;
+}
+
+/* ----------------------------------------------
+   Dark Mode Support
+------------------------------------------------*/
+
+body.dark-mode .order-card {
+  background-color: #1e1e1e;
+  border-color: #333;
+  color: #eee;
+}
+
+body.dark-mode .order-card .order-delete-btn {
+  background-color: #e53935;
+}
+
+body.dark-mode .order-card .product-entry div {
+  color: #ddd;
+}
+
+body.dark-mode .order-card .order-total {
+  color: #fff;
+}
+
+body.dark-mode .order-card .order-supplier {
+  color: #ccc;
+}
+
+body.dark-mode .order-card .receive-btn {
+  background-color: #66bb6a;
+}
+
+body.dark-mode .order-card .receive-btn:hover {
+  background-color: #43a047;
+}
+
+/* Dark mode status colors */
+body.dark-mode .status.pending {
+  background-color: #664400;
+  color: orange;
+}
+
+body.dark-mode .status.confirmed {
+  background-color: #1e4620;
+  color: #66bb6a;
+}
+
+body.dark-mode .status.shipped {
+  background-color: #0d47a1;
+  color: #90caf9;
+}
+
+body.dark-mode .status.completed {
+  background-color: #1b5e20;
+  color: #81c784;
+}
+
+/* Required/Updated dates */
+body.dark-mode .order-card .order-dates {
+  font-size: 13px;
+  color: #ffffff;
+}

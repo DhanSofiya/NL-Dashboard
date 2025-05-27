@@ -5,84 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Order Management | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css" />
-  <style>
-
-    .orders-table {
-      width: 100%;
-      margin-top: 30px;
-      border-collapse: collapse;
-      background-color: white;
-    }
-
-    .orders-table th, .orders-table td {
-      padding: 12px 15px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-
-    .orders-table th {
-      background-color: #f4f4f4;
-    }
-
-    .status {
-      font-weight: bold;
-      padding: 5px 10px;
-      border-radius: 5px;
-    }
-
-    .status.Placed {
-      color: #1e88e5;
-    }
-
-    .status.Delivered {
-      color: green;
-    }
-
-    .status.Cancelled {
-      color: red;
-    }
-
-    .status.pending {
-      color: orange;
-    }
-
-    .status.confirmed {
-      color: green;
-    }
-
-    .status.shipped {
-      color: #2196f3;
-    }
-
-    .status.delivered {
-      color: darkblue;
-    }
-
-    .status.completed {
-      color: #4caf50;
-    }
-
-    .orders-section {
-      margin-top: 40px;
-    }
-  </style>
 </head>
 <body>
   <div class="wrapper">
-    <!-- ✅ Sidebar reusable component -->
     <div id="sidebar"></div>
 
     <div class="content-container">
       <h1>Order Management</h1>
 
-      <!-- ✅ Customer Orders -->
+      <!-- Customer Orders Table -->
       <section class="orders-section">
         <h2>Customer Orders</h2>
         <table class="orders-table" id="ordersTable">
           <thead>
             <tr>
               <th>#</th>
-              <th>Order ID</th>
               <th>Customer Contact</th>
               <th>Delivery Date</th>
               <th>Address</th>
@@ -93,22 +30,10 @@
         </table>
       </section>
 
-      <!-- ✅ Supplier Orders -->
+      <!-- Supplier Orders -->
       <section class="orders-section">
         <h2>Supplier Orders</h2>
-        <table class="orders-table" id="supplierOrdersTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Order ID</th>
-              <th>Supplier</th>
-              <th>Products</th>
-              <th>Status</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div id="supplierOrdersContainer"></div>
       </section>
     </div>
   </div>
@@ -118,22 +43,18 @@
       try {
         const res = await fetch("http://localhost:5000/api/orders");
         const orders = await res.json();
-
         const tableBody = document.querySelector("#ordersTable tbody");
         tableBody.innerHTML = "";
 
         orders.forEach((order, index) => {
           const row = document.createElement("tr");
-
           row.innerHTML = `
             <td>${index + 1}</td>
-            <td>${order._id}</td>
             <td>${order.customerPhone || 'N/A'}</td>
             <td>${new Date(order.deliveryDate).toLocaleDateString()}</td>
             <td>${order.address}</td>
             <td><span class="status ${order.status.replace(" ", "")}">${order.status}</span></td>
           `;
-
           tableBody.appendChild(row);
         });
       } catch (err) {
@@ -145,37 +66,80 @@
       try {
         const res = await fetch("http://localhost:5000/api/supplier-orders");
         const orders = await res.json();
+        const container = document.getElementById("supplierOrdersContainer");
+        container.innerHTML = "";
 
-        const tableBody = document.querySelector("#supplierOrdersTable tbody");
-        tableBody.innerHTML = "";
+        orders.forEach((order) => {
+          const card = document.createElement("div");
+          card.className = "order-card";
 
-        orders.forEach((order, index) => {
-          const productList = order.products
-          .map(p => `${p.product?.name || p.product} (x${p.quantity})`)
-            .join("<br>");
+          let total = 0;
+          const productList = order.products.map(p => {
+            const name = p.product?.name || `Product ID: ${p.product}`;
+            const unitPrice = p.product?.supplier_price ?? 0;
+            const quantity = p.quantity;
+            const subtotal = unitPrice * quantity;
+            total += subtotal;
 
-          let actionBtn = "";
-          if (order.status === "shipped") {
-            actionBtn = `<br><button class="receive-btn" data-id="${order._id}">Received</button>`;
-          }
+            return `
+              <div class="product-entry">
+                <div><strong>Product:</strong> ${name}</div>
+                <div><strong>Quantity:</strong> ${quantity}</div>
+                <div><strong>Unit Price:</strong> RM ${unitPrice.toFixed(2)}</div>
+                <div><strong>Subtotal:</strong> RM ${subtotal.toFixed(2)}</div>
+              </div>
+              <hr>
+            `;
+          }).join("");
 
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${order._id}</td>
-            <td>${order.supplier?.name || 'N/A'}</td>
-            <td>${productList}</td>
-            <td>
-              <span class="status ${order.status}">${order.status}</span>
-              ${actionBtn}
-            </td>
-            <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+          const showReceiveBtn = order.status === "shipped"
+            ? `<button class="receive-btn" data-id="${order._id}">Received</button>`
+            : "";
+
+          card.innerHTML = `
+            <button class="order-delete-btn" title="Delete" data-id="${order._id}">x</button>
+            <div class="order-products">${productList}</div>
+            <div class="order-total"><strong>Total:</strong> RM ${total.toFixed(2)}</div>
+<div class="order-status">
+  <div class="order-dates">
+    <span><strong>Required By:</strong> ${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}</span>
+    <span><strong>Updated At:</strong> ${order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A'}</span>
+  </div>
+  <span class="status ${order.status}">${order.status}</span>
+</div>
+
+            <div class="order-supplier">
+              <strong>Supplier:</strong> ${order.supplier?.name || 'N/A'}<br>
+              <strong>Contact:</strong> ${order.supplier?.email || 'N/A'}
+            </div>
+            <div class="order-actions">${showReceiveBtn}</div>
           `;
 
-          tableBody.appendChild(row);
+          container.appendChild(card);
         });
 
-        // ✅ Add event listeners after table is built
+        // Event: Delete Order
+        document.querySelectorAll(".order-delete-btn").forEach(button => {
+          button.addEventListener("click", async () => {
+            const orderId = button.dataset.id;
+            const confirm = window.confirm("Are you sure you want to delete this supplier order?");
+            if (!confirm) return;
+
+            try {
+              const res = await fetch(`http://localhost:5000/api/supplier-orders/${orderId}`, {
+                method: "DELETE"
+              });
+              const data = await res.json();
+              alert(data.message);
+              fetchSupplierOrders();
+            } catch (err) {
+              console.error("Error deleting supplier order:", err);
+              alert("❌ Failed to delete supplier order.");
+            }
+          });
+        });
+
+        // Event: Mark as Received
         document.querySelectorAll(".receive-btn").forEach(button => {
           button.addEventListener("click", async () => {
             const orderId = button.dataset.id;
@@ -188,7 +152,7 @@
               });
               const data = await res.json();
               alert(data.message);
-              fetchSupplierOrders(); // Refresh after update
+              fetchSupplierOrders();
             } catch (err) {
               console.error("Error completing supplier order:", err);
               alert("❌ Failed to complete supplier order.");
