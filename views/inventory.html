@@ -6,57 +6,61 @@
   <title>Inventory Management | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css"/>
   <script defer src="/js/orderSidebar.js"></script>
-  <style>
-
-    .edit-info-btn {
-      background-color: #4caf50;
-      color: #fff;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .order-stock-btn {
-      background-color: #2196f3;
-      color: #fff;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-right: 5px;
-    }
-
-    .action-buttons {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-  </style>
 </head>
 <body>
   <div class="wrapper">
-    <!-- ✅ Sidebar dynamically injected here -->
     <div id="sidebar"></div>
 
     <div class="content-container">
       <h1>Inventory Management</h1>
+
+      <!-- 🟦 Summary Panel -->
+      <div class="inventory-stats">
+        <div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
+        <div class="stat-card" id="totalProducts">Total Products: 0</div>
+        <div class="stat-card" id="outOfStock">Out of Stock: 0</div>
+        <div class="stat-card" id="lowStock">Low Stock: 0</div>
+        <div class="stat-card" id="totalCategories">Categories: 0</div>
+        <div class="stat-card" id="totalSuppliers">Suppliers: 0</div>
+      </div>
+
+      <!-- 🔍 Controls -->
+      <div class="inventory-controls">
+        <div class="controls-wrapper">
+          <div class="control-group">
+            <input type="search" id="searchInput" placeholder="Search products..." />
+          </div>
+          <div class="control-group">
+            <select id="sortSelect">
+              <option value="">Sort By</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
+              <option value="price-asc">Price Low–High</option>
+              <option value="price-desc">Price High–Low</option>
+              <option value="stock-asc">Stock Low–High</option>
+              <option value="stock-desc">Stock High–Low</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🧱 Inventory Grid -->
       <section class="inventory-list">
         <div class="inventory-grid" id="inventoryGrid"></div>
       </section>
     </div>
   </div>
 
-  <!-- ✅ Optional: Order Sidebar Component -->
   <div id="sidebarComponent"></div>
 
   <script>
+    let allProducts = [];
+    let categoryIndex = 0;
+    let supplierIndex = 0;
+
     async function loadSidebarComponent() {
       const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
       document.getElementById("sidebarComponent").innerHTML = sidebar;
-
-      // ✅ Bind close button AFTER sidebar is injected
       const closeBtn = document.getElementById("closeSidebarBtn");
       if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -65,6 +69,75 @@
       }
     }
 
+    function updateStats(products) {
+      const total = products.length;
+      const outOfStock = products.filter(p => p.stock === 0).length;
+      const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
+      const categories = new Set(products.map(p => p.category?.name).filter(Boolean));
+      const suppliers = new Set(products.map(p => p.supplier?.name).filter(Boolean));
+
+      document.getElementById("totalProducts").innerText = `📦 Total: ${total}`;
+      document.getElementById("outOfStock").innerText = `❌ Out of Stock: ${outOfStock}`;
+      document.getElementById("lowStock").innerText = `⚠️ Low Stock: ${lowStock}`;
+      document.getElementById("totalCategories").innerText = `🗂️ Categories: ${categories.size}`;
+      document.getElementById("totalSuppliers").innerText = `🏢 Suppliers: ${suppliers.size}`;
+    }
+
+    function renderProducts(products) {
+      const inventoryGrid = document.getElementById("inventoryGrid");
+      inventoryGrid.innerHTML = "";
+
+      products.forEach(product => {
+        const categoryText = product.category?.name || "Unknown";
+        const supplierText = product.supplier?.name || "Unknown";
+        const supplierId = product.supplier?._id || "";
+        const imagePath = product.image_uri || "/images/placeholder.jpg";
+
+        const card = document.createElement("div");
+        card.classList.add("supplier-card");
+        card.innerHTML = `
+          <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
+          <h3>${product.name}</h3>
+          <p><strong>Category:</strong> ${categoryText}</p>
+          <p><strong>Supplier:</strong> ${supplierText}</p>
+          <p><strong>Price:</strong> RM ${product.price}</p>
+          <p><strong>Stock:</strong> ${product.stock ?? 0}</p>
+          <div class="action-buttons">
+            <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
+            <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
+          </div>
+        `;
+        inventoryGrid.appendChild(card);
+      });
+    }
+
+    function filterAndRender() {
+      const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+      const sortOption = document.getElementById("sortSelect").value;
+
+      let filtered = allProducts.filter(p => 
+        p.name.toLowerCase().includes(searchTerm) ||
+        p.category?.name?.toLowerCase().includes(searchTerm) ||
+        p.supplier?.name?.toLowerCase().includes(searchTerm)
+      );
+
+      switch (sortOption) {
+        case "name-asc": filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
+        case "name-desc": filtered.sort((a, b) => b.name.localeCompare(a.name)); break;
+        case "price-asc": filtered.sort((a, b) => a.price - b.price); break;
+        case "price-desc": filtered.sort((a, b) => b.price - a.price); break;
+        case "stock-asc": filtered.sort((a, b) => a.stock - b.stock); break;
+        case "stock-desc": filtered.sort((a, b) => b.stock - a.stock); break;
+      }
+
+      updateStats(filtered);
+      renderProducts(filtered);
+    }
+
+    window.editProductInfo = (id) => {
+      window.location.href = `/editProduct.html?id=${id}`;
+    };
+
     document.addEventListener("DOMContentLoaded", async () => {
       await loadSidebarComponent();
 
@@ -72,7 +145,6 @@
         .then(res => res.text())
         .then(html => {
           document.getElementById("sidebar").innerHTML = html;
-
           document.getElementById("logoutButton").addEventListener("click", async () => {
             await fetch("http://localhost:5000/auth/logout", { method: "POST" });
             localStorage.removeItem("token");
@@ -90,60 +162,51 @@
           }
         });
 
-      const inventoryGrid = document.getElementById("inventoryGrid");
+      const response = await fetch("http://localhost:5000/api/inventory");
+      allProducts = await response.json();
 
-      const renderAddProductCard = () => {
-        const addCard = document.createElement("div");
-        addCard.classList.add("supplier-card", "add-card");
-        addCard.innerHTML = `<div>+ Add New Product</div>`;
-        addCard.onclick = () => window.location.href = "/addProduct";
-        inventoryGrid.appendChild(addCard);
-      };
+      updateStats(allProducts);
+      renderProducts(allProducts);
 
-      const fetchProducts = async () => {
-        try {
-          const response = await fetch("http://localhost:5000/api/inventory");
-          const products = await response.json();
+      document.getElementById("searchInput").addEventListener("input", filterAndRender);
+      document.getElementById("sortSelect").addEventListener("change", filterAndRender);
 
-          inventoryGrid.innerHTML = "";
-          renderAddProductCard();
+      // Stat card interaction
+      document.getElementById("totalProducts").addEventListener("click", () => {
+        renderProducts(allProducts);
+      });
 
-          products.forEach(product => {
-            const categoryText = product.category?.name || "Unknown";
-            const supplierText = product.supplier?.name || "Unknown";
-            const supplierId = product.supplier?._id || "";
-            const imagePath = product.image_uri || "/images/placeholder.jpg";
+      document.getElementById("outOfStock").addEventListener("click", () => {
+        const outOfStock = allProducts.filter(p => p.stock === 0);
+        renderProducts(outOfStock);
+      });
 
-            const card = document.createElement("div");
-            card.classList.add("supplier-card");
+      document.getElementById("lowStock").addEventListener("click", () => {
+        const lowStock = allProducts.filter(p => p.stock > 0 && p.stock < 5);
+        renderProducts(lowStock);
+      });
 
-            card.innerHTML = `
-              <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
-              <h3>${product.name}</h3>
-              <p><strong>Category:</strong> ${categoryText}</p>
-              <p><strong>Supplier:</strong> ${supplierText}</p>
-              <p><strong>Price:</strong> RM ${product.price}</p>
-              <p><strong>Stock:</strong> ${product.stock ?? 10}</p>
+      document.getElementById("totalCategories").addEventListener("click", () => {
+        const categories = Array.from(new Set(allProducts.map(p => p.category?.name).filter(Boolean)));
+        if (categories.length === 0) return;
 
-              <div class="action-buttons">
-                <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
-                <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
-              </div>
-            `;
+        const selected = categories[categoryIndex];
+        const filtered = allProducts.filter(p => p.category?.name === selected);
 
-            inventoryGrid.appendChild(card);
-          });
-        } catch (err) {
-          inventoryGrid.innerHTML = "<p>Failed to load inventory.</p>";
-          console.error(err);
-        }
-      };
+        renderProducts(filtered);
+        categoryIndex = (categoryIndex + 1) % categories.length;
+      });
 
-      window.editProductInfo = (id) => {
-        window.location.href = `/editProduct.html?id=${id}`;
-      };
+      document.getElementById("totalSuppliers").addEventListener("click", () => {
+        const suppliers = Array.from(new Set(allProducts.map(p => p.supplier?.name).filter(Boolean)));
+        if (suppliers.length === 0) return;
 
-      fetchProducts();
+        const selected = suppliers[supplierIndex];
+        const filtered = allProducts.filter(p => p.supplier?.name === selected);
+
+        renderProducts(filtered);
+        supplierIndex = (supplierIndex + 1) % suppliers.length;
+      });
     });
   </script>
 </body>
