@@ -1,13 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Supplier Management | NL-Dashboard</title>
-  <link rel="stylesheet" href="/css/styles.css" />
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Supplier Management | NL-Dashboard
+  </title>
+  <link href="/css/styles.css" rel="stylesheet"/>
   <style>
-    .error-message {
+   .error-message {
       text-align: center;
       color: red;
       margin-top: 2rem;
@@ -17,57 +18,96 @@
       border: 2px dashed #aaa;
     }
   </style>
-</head>
-<body>
+ </head>
+ <body>
   <div class="wrapper">
-    <div id="sidebar"></div>
-
-    <div class="content-container">
-      <h1>Supplier Management</h1>
-
-      <div class="supplier-stats">
-        <div class="stat-card add-supplier" id="addSupplierBtn">➕ New</div>
-        <div class="stat-card" id="totalSuppliers">📦 Total: 0</div>
-        <div class="stat-card" id="ratedSuppliers">⭐ Rated: 0</div>
-        <div class="stat-card" id="unratedSuppliers">⚠️ Unrated: 0</div>
-        <div class="stat-card" id="categorySuppliers">🗂️ Category: 0</div>
-      </div>
-
-      <div class="inventory-controls">
-        <div class="controls-wrapper">
-          <div class="control-group">
-            <input type="search" id="searchInput" placeholder="Search suppliers..." />
-          </div>
-          <div class="control-group">
-            <select id="sortSelect">
-              <option value="">Sort By</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-              <option value="rating-asc">Rating Low–High</option>
-              <option value="rating-desc">Rating High–Low</option>
-              <option value="products-asc">Products Few–Many</option>
-              <option value="products-desc">Products Many–Few</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <section class="supplier-list">
-        <div class="inventory-grid" id="supplierGrid"></div>
-<div class="pagination-controls">
-  <button id="prevPageBtn">◀️</button>
-  <span id="pageIndicator">Page 1 of X</span>
-  <button id="nextPageBtn">▶️</button>
-</div>
-
-
-        <p id="errorMessage" class="error-message"></p>
-      </section>
+   <div id="sidebar">
+   </div>
+   <div class="content-container">
+    <h1>
+     Supplier Management
+    </h1>
+    <div class="supplier-stats">
+     <div class="stat-card add-supplier" id="addSupplierBtn">
+      ➕ New
+     </div>
+     <div class="stat-card" id="totalSuppliers">
+      📦 Total: 0
+     </div>
+     <div class="stat-card" id="ratedSuppliers">
+      ⭐ Rated: 0
+     </div>
+     <div class="stat-card" id="unratedSuppliers">
+      ⚠️ Unrated: 0
+     </div>
+     <div class="stat-card" id="categorySuppliers">
+      🗂️ Category: 0
+     </div>
     </div>
+    <div class="inventory-controls">
+     <div class="controls-wrapper">
+      <div class="control-group">
+       <span class="active-filter-label" id="activeFilterLabel">
+        Showing: All Suppliers
+       </span>
+      </div>
+      <div class="control-group">
+       <input id="searchInput" placeholder="Search suppliers..." type="search"/>
+      </div>
+      <div class="control-group">
+       <select id="sortSelect">
+        <option value="">
+         Sort By
+        </option>
+        <option value="name-asc">
+         Name A–Z
+        </option>
+        <option value="name-desc">
+         Name Z–A
+        </option>
+        <option value="rating-asc">
+         Rating Low–High
+        </option>
+        <option value="rating-desc">
+         Rating High–Low
+        </option>
+        <option value="products-asc">
+         Products Few–Many
+        </option>
+        <option value="products-desc">
+         Products Many–Few
+        </option>
+       </select>
+      </div>
+     </div>
+    </div>
+    <section class="supplier-list">
+     <div class="inventory-grid" id="supplierGrid">
+     </div>
+     <div class="pagination-controls">
+      <button id="prevPageBtn">
+       ◀️
+      </button>
+      <span id="pageIndicator">
+       Page 1 of X
+      </span>
+      <button id="nextPageBtn">
+       ▶️
+      </button>
+     </div>
+     <p class="error-message" id="errorMessage">
+     </p>
+    </section>
+   </div>
   </div>
 
   <script>
-    let allSuppliers = [];
+    function updateActiveFilterLabel(label) {
+      const field = document.getElementById("activeFilterLabel");
+      if (field) field.textContent = label ? `Showing: ${label}` : "";
+    }
+
+   let allSuppliers = [];
     let filteredSuppliers = [];
     let uniqueCategories = [];
     let categoryIndex = 0;
@@ -219,22 +259,32 @@
         window.location.href = "/addSupplier";
       });
 
-      document.getElementById("totalSuppliers").addEventListener("click", () => {
+      document.getElementById("totalSuppliers").addEventListener("click", async () => {
+        await renderSuppliers("all");
+        setActiveCard("totalSuppliers");
         renderSuppliers("all");
         setActiveCard("totalSuppliers");
+        updateActiveFilterLabel("All Suppliers");
       });
 
-      document.getElementById("ratedSuppliers").addEventListener("click", () => {
+      document.getElementById("ratedSuppliers").addEventListener("click", async () => {
+        await renderSuppliers("rated");
+        setActiveCard("ratedSuppliers");
         renderSuppliers("rated");
         setActiveCard("ratedSuppliers");
+        updateActiveFilterLabel("Rated Suppliers");
       });
 
-      document.getElementById("unratedSuppliers").addEventListener("click", () => {
+      document.getElementById("unratedSuppliers").addEventListener("click", async () => {
+        await renderSuppliers("unrated");
+        setActiveCard("unratedSuppliers");
         renderSuppliers("unrated");
         setActiveCard("unratedSuppliers");
+        updateActiveFilterLabel("Unrated Suppliers");
       });
 
       document.getElementById("categorySuppliers").addEventListener("click", async () => {
+
         if (uniqueCategories.length === 0) {
           const categorySet = new Set();
           for (const supplier of allSuppliers) {
@@ -253,8 +303,9 @@
         const selectedCategory = uniqueCategories[categoryIndex];
         categoryIndex = (categoryIndex + 1) % uniqueCategories.length;
 
-        renderSuppliers("category", selectedCategory);
+        await renderSuppliers("category", selectedCategory);
         setActiveCard("categorySuppliers");
+        updateActiveFilterLabel(selectedCategory);
       });
 
       document.getElementById("searchInput").addEventListener("input", () => {
@@ -284,7 +335,8 @@
 
       renderSuppliers("all");
       setActiveCard("totalSuppliers");
+        updateActiveFilterLabel("All Suppliers");
     });
   </script>
-</body>
+ </body>
 </html>
