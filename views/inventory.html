@@ -24,11 +24,11 @@
       <!-- 🟦 Summary Panel -->
       <div class="inventory-stats">
         <div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
-        <div class="stat-card" id="totalProducts">Total Products: 0</div>
+        <div class="stat-card" id="totalProducts">Total: 0</div>
         <div class="stat-card" id="outOfStock">Out of Stock: 0</div>
         <div class="stat-card" id="lowStock">Low Stock: 0</div>
-        <div class="stat-card" id="totalCategories">Categories: 0</div>
-        <div class="stat-card" id="totalSuppliers">Suppliers: 0</div>
+        <div class="stat-card" id="totalCategories">Category: 0</div>
+        <div class="stat-card" id="totalSuppliers">Supplier: 0</div>
       </div>
 
       <!-- 🔍 Controls -->
@@ -86,8 +86,8 @@
       document.getElementById("totalProducts").innerText = `📦 Total: ${total}`;
       document.getElementById("outOfStock").innerText = `❌ Out of Stock: ${outOfStock}`;
       document.getElementById("lowStock").innerText = `⚠️ Low Stock: ${lowStock}`;
-      document.getElementById("totalCategories").innerText = `🗂️ Categories: ${categories.size}`;
-      document.getElementById("totalSuppliers").innerText = `🏢 Suppliers: ${suppliers.size}`;
+      document.getElementById("totalCategories").innerText = `🗂️ Category: ${categories.size}`;
+      document.getElementById("totalSuppliers").innerText = `🏢 Supplier: ${suppliers.size}`;
     }
 
     function renderProducts(products) {

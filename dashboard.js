@@ -24,7 +24,7 @@ connectDB();
 const mongoose = require('mongoose');
 
 mongoose.connection.on('connected', () => {
-  console.log(`✅ Connected to MongoDB database: ${mongoose.connection.name}`);
+  console.log(`✅ Connected to MongoDB database`);
 });
 
 
