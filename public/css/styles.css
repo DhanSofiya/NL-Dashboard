@@ -1259,3 +1259,9 @@ body.dark-mode .status.completed {
   background-color: #1b5e20;
   color: #81c784;
 }
+
+/* Required/Updated dates */
+body.dark-mode .order-card .order-dates {
+  font-size: 13px;
+  color: #ffffff;
+}

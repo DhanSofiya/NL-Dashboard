@@ -149,7 +149,7 @@ router.get('/', async (req, res) => {
   try {
     const orders = await SupplierOrder.find()
       .populate('supplier', 'name email')
-      .populate('products.product', 'name supplier_price')
+      .populate('products.product', 'name supplier_price') // ✅ FIXED: Include supplier_price
       .sort({ createdAt: -1 });
 
     res.json(orders);
