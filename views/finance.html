@@ -20,30 +20,31 @@
     </div>
 
     <div class="finance-grid" id="financeGrid">
-      <div class="finance-card" id="profitabilityCard">
-        <h3>📊 Business Profitability Overview</h3>
-        <canvas id="profitabilityChart"></canvas>
+      <div class="finance-card">
+        <h3>🚚 Supplier Spending
+          <select id="supplierLimit">
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="All">All</option>
+          </select>
+        </h3>
+        <canvas id="supplierChart"></canvas>
       </div>
 
-      <div class="finance-card" id="productRevenueCard">
-        <h3>🛒 Product Sales Distribution</h3>
+      <div class="finance-card">
+        <h3>📦 Product Expense Breakdown
+          <select id="productLimit">
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="All">All</option>
+          </select>
+        </h3>
         <canvas id="productChart"></canvas>
       </div>
 
-      <div class="finance-card" id="employeeWagesCard">
-        <h3>👥 Employee Wages by Role</h3>
-        <select id="employeeFilter">
-          <option value="All">All</option>
-          <option value="Admin">Admin</option>
-          <option value="Staff">Staff</option>
-          <option value="Rider">Rider</option>
-        </select>
-        <canvas id="wagesChart"></canvas>
-      </div>
-
-      <div class="finance-card" id="supplierOrdersCard">
-        <h3>🚚 Supplier Spending Overview</h3>
-        <canvas id="supplierChart"></canvas>
+      <div class="finance-card">
+        <h3>📅 Daily Expenses</h3>
+        <canvas id="dailyChart"></canvas>
       </div>
     </div>
   </div>
@@ -51,11 +52,12 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ Sidebar and Dark Mode
+  // Sidebar and dark mode
   await fetch("/components/sidebar.html")
     .then(res => res.text())
-    .then(data => document.getElementById("sidebar").innerHTML = data)
-    .then(() => {
+    .then(html => {
+      document.getElementById("sidebar").innerHTML = html;
+
       document.getElementById("logoutButton").addEventListener("click", async () => {
         await fetch("/auth/logout", { method: "POST" });
         localStorage.clear();
@@ -72,93 +74,79 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  // Helper: Slice data by dropdown
+  function limitData(data, limit) {
+    if (limit === 'All') return data;
+    return data.slice(0, parseInt(limit));
+  }
 
-  // 📊 Profitability (static mock for now)
-  new Chart(document.getElementById('profitabilityChart').getContext('2d'), {
-    type:'line',
-    data:{
-      labels: months,
-      datasets:[
-        { label:'Revenue', data:[10000,12000,15000,17000,16000,18000], borderColor:'#2e86de', fill:false },
-        { label:'Supplier Cost', data:[4000,5000,6000,7000,6000,6500], borderColor:'#e67e22', fill:false },
-        { label:'Wages', data:[2000,2100,2200,2300,2400,2500], borderColor:'#27ae60', fill:false }
-      ]
-    }
+  // Supplier Spending Chart
+  let supplierChart;
+  async function renderSupplierChart(limit = '5') {
+    const res = await fetch('/api/finance/expenses/suppliers');
+    const data = await res.json();
+    const limited = limitData(data.sort((a, b) => b.totalExpense - a.totalExpense), limit);
+
+    if (supplierChart) supplierChart.destroy();
+    supplierChart = new Chart(document.getElementById("supplierChart").getContext("2d"), {
+      type: 'bar',
+      data: {
+        labels: limited.map(d => d.supplier),
+        datasets: [{
+          label: "Total Spend (MYR)",
+          data: limited.map(d => d.totalExpense),
+          backgroundColor: '#f39c12'
+        }]
+      }
+    });
+  }
+
+  document.getElementById("supplierLimit").addEventListener("change", (e) => {
+    renderSupplierChart(e.target.value);
   });
 
-  // 👥 Employee Wages by Role
-  const roles = ['Admin', 'Staff', 'Rider'];
-  const roleColors = { Admin:'#9b59b6', Staff:'#2980b9', Rider:'#2ecc71' };
-  let wagesChart = new Chart(document.getElementById('wagesChart').getContext('2d'), {
-    type: 'bar',
-    data: { labels: months, datasets: [] },
-    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  // Product Expense Chart
+  let productChart;
+  async function renderProductChart(limit = '5') {
+    const res = await fetch('/api/finance/expenses/products');
+    const data = await res.json();
+    const limited = limitData(data.sort((a, b) => b.totalExpense - a.totalExpense), limit);
+
+    if (productChart) productChart.destroy();
+    productChart = new Chart(document.getElementById("productChart").getContext("2d"), {
+      type: 'doughnut',
+      data: {
+        labels: limited.map(p => p.name),
+        datasets: [{
+          data: limited.map(p => p.totalExpense),
+          backgroundColor: ['#1abc9c','#9b59b6','#f1c40f','#e74c3c','#3498db','#e67e22','#2ecc71','#34495e','#c0392b','#7f8c8d']
+        }]
+      }
+    });
+  }
+
+  document.getElementById("productLimit").addEventListener("change", (e) => {
+    renderProductChart(e.target.value);
   });
 
-  const generateRandomMonthlyData = (total) => {
-    const avg = total / 6;
-    return Array(6).fill(0).map(() => Math.round(avg * (0.8 + Math.random() * 0.4)));
-  };
-
-  const wageRes = await fetch('/api/finance/wages');
-  const wageJson = await wageRes.json();
-  const totalWages = wageJson.totalWages || 0;
-
-  const mockRoleSplit = {
-    Admin: totalWages * 0.3,
-    Staff: totalWages * 0.5,
-    Rider: totalWages * 0.2
-  };
-
-  const employeeFilter = document.getElementById('employeeFilter');
-  employeeFilter.addEventListener('change', () => {
-    const choice = employeeFilter.value;
-    let datasets = [];
-
-    if (choice === "All") {
-      datasets = roles.map(role => ({
-        label: role,
-        data: generateRandomMonthlyData(mockRoleSplit[role]),
-        backgroundColor: roleColors[role]
-      }));
-    } else {
-      datasets = [{
-        label: choice,
-        data: generateRandomMonthlyData(mockRoleSplit[choice]),
-        backgroundColor: roleColors[choice]
-      }];
-    }
-
-    wagesChart.data.datasets = datasets;
-    wagesChart.update();
-  });
-  employeeFilter.dispatchEvent(new Event('change'));
-
-  // 🚚 Supplier Orders (static for now)
-  new Chart(document.getElementById('supplierChart').getContext('2d'), {
-    type: 'bar',
+  // Daily Expenses Chart
+  const dailyRes = await fetch('/api/finance/expenses/daily');
+  const dailyData = await dailyRes.json();
+  new Chart(document.getElementById("dailyChart").getContext("2d"), {
+    type: 'line',
     data: {
-      labels: months,
+      labels: dailyData.map(d => d.date),
       datasets: [{
-        label: 'Supplier Orders (MYR)',
-        data: [5000, 5200, 4800, 5600, 5100, 5800],
-        backgroundColor: '#f39c12'
+        label: "Total Daily Expenses (MYR)",
+        data: dailyData.map(d => d.total),
+        borderColor: '#2e86de',
+        fill: false
       }]
     }
   });
 
-  // 🛒 Product Revenue (static for now)
-  new Chart(document.getElementById('productChart').getContext('2d'), {
-    type:'doughnut',
-    data:{
-      labels:['Product A','Product B','Product C','Product D'],
-      datasets:[{ data:[25,15,30,20], backgroundColor:['#1abc9c','#9b59b6','#f1c40f','#e74c3c'] }]
-    }
-  });
-
-  // 📥 PDF Export
-  document.getElementById("downloadPDF").addEventListener("click", async()=> {
+  // PDF Download
+  document.getElementById("downloadPDF").addEventListener("click", async () => {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
     await html2canvas(document.getElementById("financeGrid")).then(canvas => {
@@ -166,10 +154,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData,'PNG',0,0,pdfWidth,pdfHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save("Finance_Dashboard.pdf");
     });
   });
+
+  // Initial charts
+  renderSupplierChart('5');
+  renderProductChart('5');
 });
 </script>
 </body>

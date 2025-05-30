@@ -1,75 +1,97 @@
-// 📂 routes/finance.js
+// routes/finance.js
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/Product'); // For product prices
+const SupplierOrder = require('../models/SupplierOrder');
 const Product = require('../models/Product');
-const User = require('../models/User');
-const Supplier = require('../models/Supplier');
-const OrderModel = require('../models/Order');  // Using OrderModel to avoid name clash
 
-// GET /api/finance/sales → total sales + product revenue breakdown
-router.get('/sales', async (req, res) => {
+// ✅ GET: Total expenses by supplier
+router.get('/expenses/suppliers', async (req, res) => {
   try {
-    const orders = await OrderModel.find();
-    let totalSales = 0;
-    const productSales = {};
+    const orders = await SupplierOrder.find({ status: { $in: ['completed', 'delayed'] } })
+      .populate('supplier', 'name')
+      .populate('products.product', 'supplier_price');
+
+    const supplierExpenses = {};
 
     for (const order of orders) {
-      for (const item of order.items) {
-        const productId = item.product;
-        const quantity = item.quantity;
+      const supplierId = order.supplier._id;
+      if (!supplierExpenses[supplierId]) {
+        supplierExpenses[supplierId] = {
+          supplier: order.supplier.name,
+          totalExpense: 0
+        };
+      }
 
-        if (!productSales[productId]) productSales[productId] = 0;
-        productSales[productId] += quantity;
-
-        totalSales += item.price * quantity;
+      for (const item of order.products) {
+        const price = item.product?.supplier_price || 0;
+        supplierExpenses[supplierId].totalExpense += price * item.quantity;
       }
     }
 
-    // Populate product names
-    const productDetails = await Product.find({ _id: { $in: Object.keys(productSales) } });
-    const productRevenue = productDetails.map(p => ({
-      name: p.name,
-      totalSold: productSales[p._id] || 0
-    }));
-
-    res.json({ totalSales, productRevenue });
+    res.json(Object.values(supplierExpenses));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Supplier expense error:", err);
+    res.status(500).json({ message: "Error fetching supplier expenses" });
   }
 });
 
-// GET /api/finance/wages → total employee wages
-router.get('/wages', async (req, res) => {
+// ✅ GET: Total expenses by product
+router.get('/expenses/products', async (req, res) => {
   try {
-    const employees = await User.find({ role: 'Employee' });
-    let totalWages = 0;
+    const orders = await SupplierOrder.find({ status: { $in: ['completed', 'delayed'] } })
+      .populate('products.product', 'name supplier_price');
 
-    employees.forEach(emp => {
-      if (emp.wage) totalWages += emp.wage;
-    });
+    const productExpenses = {};
 
-    res.json({ totalWages });
+    for (const order of orders) {
+      for (const item of order.products) {
+        const product = item.product;
+        if (!product) continue;
+
+        if (!productExpenses[product._id]) {
+          productExpenses[product._id] = {
+            name: product.name,
+            totalExpense: 0
+          };
+        }
+
+        productExpenses[product._id].totalExpense += (product.supplier_price || 0) * item.quantity;
+      }
+    }
+
+    res.json(Object.values(productExpenses));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Product expense error:", err);
+    res.status(500).json({ message: "Error fetching product expenses" });
   }
 });
 
-// GET /api/finance/supplierOrders → total supplier orders (marked by type field or special flag)
-router.get('/supplierOrders', async (req, res) => {
+// ✅ GET: Daily total supplier expenses
+router.get('/expenses/daily', async (req, res) => {
   try {
-    const supplierOrders = await OrderModel.find({ type: 'supplierOrder' });
-    let totalSupplierOrders = 0;
+    const orders = await SupplierOrder.find({ status: { $in: ['completed', 'delayed'] } })
+      .populate('products.product', 'supplier_price');
 
-    supplierOrders.forEach(order => {
-      order.items.forEach(item => {
-        totalSupplierOrders += item.price * item.quantity;
-      });
-    });
+    const dailyTotals = {};
 
-    res.json({ totalSupplierOrders });
+    for (const order of orders) {
+      const dateKey = new Date(order.updatedAt).toISOString().slice(0, 10); // 'YYYY-MM-DD'
+      if (!dailyTotals[dateKey]) dailyTotals[dateKey] = 0;
+
+      for (const item of order.products) {
+        const price = item.product?.supplier_price || 0;
+        dailyTotals[dateKey] += price * item.quantity;
+      }
+    }
+
+    const result = Object.entries(dailyTotals)
+      .map(([date, total]) => ({ date, total }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Daily expense error:", err);
+    res.status(500).json({ message: "Error fetching daily expenses" });
   }
 });
 
