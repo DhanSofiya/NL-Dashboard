@@ -1,3 +1,4 @@
+// routes/suppliers.js
 const express = require('express');
 const router = express.Router();
 const Supplier = require('../models/Supplier');
@@ -18,7 +19,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ POST a new supplier
+// ✅ POST a new supplier (updated to include rating fields)
 router.post('/', async (req, res) => {
   try {
     const { name, email, address, imageUrl } = req.body;
@@ -137,8 +138,13 @@ router.post('/:id/sendOrderEmail', async (req, res) => {
           <li><strong>Quantity:</strong> ${quantity}</li>
           <li><strong>Notes:</strong> ${notes || "None"}</li>
         </ul>
-        <p>We kindly request delivery before <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.</p>
-        <p>Please confirm this order by clicking the button below:</p>
+        <p>
+          We kindly request that the order be delivered before 
+          <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.
+        </p>
+        <p>
+          Please confirm this order by clicking the button below:
+        </p>
         <p>
           <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
             display:inline-block;
@@ -231,8 +237,13 @@ router.post('/:id/sendBulkOrderEmail', async (req, res) => {
         <p>We would like to place an order for the following items:</p>
         <ul>${productListHTML}</ul>
         <p><strong>Notes:</strong> ${notes || "None"}</p>
-        <p>We kindly request delivery before <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.</p>
-        <p>Please confirm this order by clicking the button below:</p>
+        <p>
+          We kindly request that the order be delivered before 
+          <strong>${deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "N/A"}</strong>.
+        </p>
+        <p>
+          Please confirm this order by clicking the button below:
+        </p>
         <p>
           <a href="${nextActionUrl}" onclick="window.open(this.href, 'popup', 'width=10,height=10,left=9999,top=9999'); return false;" style="
             display:inline-block;

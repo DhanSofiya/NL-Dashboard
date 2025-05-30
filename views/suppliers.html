@@ -75,6 +75,8 @@
           errorMessage.textContent = "No suppliers found.";
         } else {
           suppliers.forEach(supplier => {
+            console.log('SUPPLIER DATA:', supplier); // ✅ Debug log
+
             const card = document.createElement("div");
             card.classList.add("supplier-card");
 
@@ -82,7 +84,7 @@
               <img src="${supplier.imageUrl}" alt="Supplier Image" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
               <h3>${supplier.name}</h3>
               <p><strong>Email:</strong> ${supplier.email}</p>
-              <p><strong>Rating:</strong> ${supplier.rating ?? 'Not Rated'}</p>
+              <p><strong>Rating:</strong> ${typeof supplier.rating === 'number' ? supplier.rating.toFixed(1) : 'Not Rated'}</p>
               <div class="action-buttons">
                 <button class="edit-info-btn" onclick="viewSupplier('${supplier._id}')">View More</button>
               </div>

@@ -23,7 +23,6 @@ router.get('/next/:id', async (req, res) => {
       order.updatedAt = Date.now();
       await order.save();
 
-      // Optional: send email prompting to ship
       const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
       const shipUrl = `${baseUrl}/trigger-action.html?id=${order._id}&token=${order.emailToken}`;
 
@@ -68,7 +67,7 @@ router.get('/next/:id', async (req, res) => {
       await order.save();
     }
 
-    res.sendStatus(204); // success, no content
+    res.sendStatus(204);
   } catch (error) {
     console.error("❌ Error updating supplier order status:", error);
     res.sendStatus(500);
@@ -92,7 +91,7 @@ router.put('/delivered/:id', async (req, res) => {
   }
 });
 
-// ✅ Admin: Mark as completed and update stock
+// ✅ Admin: Mark as completed and update stock and rating
 router.put('/complete/:id', async (req, res) => {
   try {
     const order = await SupplierOrder.findById(req.params.id);
@@ -108,11 +107,37 @@ router.put('/complete/:id', async (req, res) => {
       }
     }
 
-    order.status = 'completed';
-    order.updatedAt = Date.now();
+    const now = new Date();
+    const isOnTime = order.deliveryDate && now <= order.deliveryDate;
+
+    // Update order status accordingly
+    order.status = isOnTime ? 'completed' : 'delayed';
+    order.updatedAt = now;
     await order.save();
 
-    res.json({ message: "Order marked as completed and stock updated" });
+    // Update supplier stats and rating
+    const supplier = await Supplier.findById(order.supplier);
+    if (supplier) {
+      supplier.totalCompletedOrders = (supplier.totalCompletedOrders || 0) + 1;
+      if (isOnTime) {
+        supplier.onTimeDeliveries = (supplier.onTimeDeliveries || 0) + 1;
+      }
+
+      const onTime = supplier.onTimeDeliveries || 0;
+      const total = supplier.totalCompletedOrders || 1;
+      supplier.rating = Math.round((onTime / total) * 5 * 10) / 10;
+
+      await supplier.save();
+
+      console.log("✅ Supplier stats updated:", {
+        supplier: supplier.name,
+        onTimeDeliveries: supplier.onTimeDeliveries,
+        totalCompletedOrders: supplier.totalCompletedOrders,
+        rating: supplier.rating
+      });
+    }
+
+    res.json({ message: `Order marked as ${order.status} and stock updated` });
   } catch (error) {
     console.error("❌ Error completing supplier order:", error);
     res.status(500).json({ message: "Failed to complete order" });
@@ -122,15 +147,29 @@ router.put('/complete/:id', async (req, res) => {
 // ✅ GET all supplier orders (for dashboard)
 router.get('/', async (req, res) => {
   try {
-const orders = await SupplierOrder.find()
-  .populate('supplier', 'name email')
-  .populate('products.product', 'name')
-  .sort({ createdAt: -1 });
+    const orders = await SupplierOrder.find()
+      .populate('supplier', 'name email')
+      .populate('products.product', 'name supplier_price')
+      .sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error) {
     console.error("❌ Error fetching supplier orders:", error);
     res.status(500).json({ message: "Failed to load supplier orders" });
+  }
+});
+
+// ✅ DELETE a supplier order by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedOrder = await SupplierOrder.findByIdAndDelete(req.params.id);
+    if (!deletedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    res.json({ message: "Order deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting supplier order:", error);
+    res.status(500).json({ message: "Failed to delete order" });
   }
 });
 

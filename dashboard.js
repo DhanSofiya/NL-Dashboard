@@ -21,6 +21,12 @@ const upload = multer({ storage: storage });
 
 // 🔗 Connect MongoDB
 connectDB();
+const mongoose = require('mongoose');
+
+mongoose.connection.on('connected', () => {
+  console.log(`✅ Connected to MongoDB database: ${mongoose.connection.name}`);
+});
+
 
 // 🛠 Middleware
 app.use(express.json());
