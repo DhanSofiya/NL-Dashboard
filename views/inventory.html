@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +13,48 @@
       box-shadow: 0 0 0 3px #999 inset;
       transform: scale(1.02);
     }
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .pagination-controls button {
+      font-size: 1.3rem;
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 6px;
+      background-color: #eee;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pagination-controls button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .pagination-controls span {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+      min-width: 100px;
+      text-align: center;
+    }
+    body.dark-mode .pagination-controls button {
+      background-color: #444;
+      color: #fff;
+    }
+    body.dark-mode .pagination-controls button:disabled {
+      background-color: #555;
+      color: #888;
+    }
+    body.dark-mode .pagination-controls span {
+      color: #ddd;
+    }
   </style>
 </head>
 <body>
@@ -21,7 +64,6 @@
     <div class="content-container">
       <h1>Inventory Management</h1>
 
-      <!-- 🟦 Summary Panel -->
       <div class="inventory-stats">
         <div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
         <div class="stat-card" id="totalProducts">Total: 0</div>
@@ -31,7 +73,6 @@
         <div class="stat-card" id="totalSuppliers">Supplier: 0</div>
       </div>
 
-      <!-- 🔍 Controls -->
       <div class="inventory-controls">
         <div class="controls-wrapper">
           <div class="control-group">
@@ -51,9 +92,13 @@
         </div>
       </div>
 
-      <!-- 🧱 Inventory Grid -->
       <section class="inventory-list">
         <div class="inventory-grid" id="inventoryGrid"></div>
+        <div class="pagination-controls">
+          <button id="prevPageBtn">◀️</button>
+          <span id="pageIndicator">Page 1 of 1</span>
+          <button id="nextPageBtn">▶️</button>
+        </div>
       </section>
     </div>
   </div>
@@ -64,6 +109,8 @@
     let allProducts = [];
     let categoryIndex = 0;
     let supplierIndex = 0;
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 9;
 
     async function loadSidebarComponent() {
       const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
@@ -94,7 +141,11 @@
       const inventoryGrid = document.getElementById("inventoryGrid");
       inventoryGrid.innerHTML = "";
 
-      products.forEach(product => {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const pageData = products.slice(startIndex, endIndex);
+
+      pageData.forEach(product => {
         const categoryText = product.category?.name || "Unknown";
         const supplierText = product.supplier?.name || "Unknown";
         const supplierId = product.supplier?._id || "";
@@ -119,13 +170,18 @@
         `;
         inventoryGrid.appendChild(card);
       });
+
+      const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
+      document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById("prevPageBtn").disabled = currentPage === 1;
+      document.getElementById("nextPageBtn").disabled = currentPage === totalPages;
     }
 
     function filterAndRender() {
       const searchTerm = document.getElementById("searchInput").value.toLowerCase();
       const sortOption = document.getElementById("sortSelect").value;
 
-      let filtered = allProducts.filter(p => 
+      let filtered = allProducts.filter(p =>
         p.name.toLowerCase().includes(searchTerm) ||
         p.category?.name?.toLowerCase().includes(searchTerm) ||
         p.supplier?.name?.toLowerCase().includes(searchTerm)
@@ -186,8 +242,36 @@
       updateStats(allProducts);
       renderProducts(allProducts);
 
-      document.getElementById("searchInput").addEventListener("input", filterAndRender);
-      document.getElementById("sortSelect").addEventListener("change", filterAndRender);
+      document.getElementById("searchInput").addEventListener("input", () => {
+        currentPage = 1;
+        filterAndRender();
+      });
+
+      document.getElementById("sortSelect").addEventListener("change", () => {
+        currentPage = 1;
+        filterAndRender();
+      });
+
+      document.getElementById("prevPageBtn").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          filterAndRender();
+        }
+      });
+
+      document.getElementById("nextPageBtn").addEventListener("click", () => {
+        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+        const filtered = allProducts.filter(p =>
+          p.name.toLowerCase().includes(searchTerm) ||
+          p.category?.name?.toLowerCase().includes(searchTerm) ||
+          p.supplier?.name?.toLowerCase().includes(searchTerm)
+        );
+        const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          filterAndRender();
+        }
+      });
 
       document.getElementById("totalProducts").addEventListener("click", () => {
         renderProducts(allProducts);

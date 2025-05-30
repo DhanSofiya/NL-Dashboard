@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,33 +12,189 @@
       color: red;
       margin-top: 2rem;
     }
+    .supplier-card.unrated {
+      opacity: 0.7;
+      border: 2px dashed #aaa;
+    }
   </style>
 </head>
 <body>
   <div class="wrapper">
-    <!-- ✅ Sidebar will be loaded here -->
     <div id="sidebar"></div>
 
-    <!-- Main Content -->
     <div class="content-container">
       <h1>Supplier Management</h1>
-      <section class="supplier-list">
-        <div class="inventory-grid" id="supplierGrid">
-          <!-- Add Supplier card and supplier cards will be appended here -->
+
+      <div class="supplier-stats">
+        <div class="stat-card add-supplier" id="addSupplierBtn">➕ New</div>
+        <div class="stat-card" id="totalSuppliers">📦 Total: 0</div>
+        <div class="stat-card" id="ratedSuppliers">⭐ Rated: 0</div>
+        <div class="stat-card" id="unratedSuppliers">⚠️ Unrated: 0</div>
+        <div class="stat-card" id="categorySuppliers">🗂️ Category: 0</div>
+      </div>
+
+      <div class="inventory-controls">
+        <div class="controls-wrapper">
+          <div class="control-group">
+            <input type="search" id="searchInput" placeholder="Search suppliers..." />
+          </div>
+          <div class="control-group">
+            <select id="sortSelect">
+              <option value="">Sort By</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
+              <option value="rating-asc">Rating Low–High</option>
+              <option value="rating-desc">Rating High–Low</option>
+              <option value="products-asc">Products Few–Many</option>
+              <option value="products-desc">Products Many–Few</option>
+            </select>
+          </div>
         </div>
+      </div>
+
+      <section class="supplier-list">
+        <div class="inventory-grid" id="supplierGrid"></div>
+<div class="pagination-controls">
+  <button id="prevPageBtn">◀️</button>
+  <span id="pageIndicator">Page 1 of X</span>
+  <button id="nextPageBtn">▶️</button>
+</div>
+
+
         <p id="errorMessage" class="error-message"></p>
       </section>
     </div>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      // ✅ Load sidebar component
-      await fetch("/components/sidebar.html")
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById("sidebar").innerHTML = data;
+    let allSuppliers = [];
+    let filteredSuppliers = [];
+    let uniqueCategories = [];
+    let categoryIndex = 0;
+    let productCounts = {};
+    const ITEMS_PER_PAGE = 9;
+    let currentPage = 1;
 
+    async function getSupplierProductInfo(supplierId) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/suppliers/${supplierId}/products`);
+        const products = res.ok ? await res.json() : [];
+        const categories = [...new Set(products.map(p => p.category?.name).filter(Boolean))];
+        return { categories, count: products.length };
+      } catch {
+        return { categories: [], count: 0 };
+      }
+    }
+
+    function viewSupplier(id) {
+      window.location.href = `/supplierDetails?id=${id}`;
+    }
+
+    function updateStatCards(suppliers, categorySet) {
+      document.getElementById("totalSuppliers").innerText = `📦 Total: ${suppliers.length}`;
+      document.getElementById("ratedSuppliers").innerText = `⭐ Rated: ${suppliers.filter(s => s.totalCompletedOrders > 0).length}`;
+      document.getElementById("unratedSuppliers").innerText = `⚠️ Unrated: ${suppliers.filter(s => s.rating === 0 && s.totalCompletedOrders === 0).length}`;
+      document.getElementById("categorySuppliers").innerText = `🗂️ Category: ${categorySet.size}`;
+    }
+
+    async function renderSuppliers(filter = "all", categoryFilter = "") {
+      const categorySet = new Set();
+      productCounts = {};
+      filteredSuppliers = [];
+
+      for (const supplier of allSuppliers) {
+        const isRated = supplier.totalCompletedOrders > 0;
+        const isUnrated = supplier.rating === 0 && supplier.totalCompletedOrders === 0;
+        const { categories, count } = await getSupplierProductInfo(supplier._id);
+
+        supplier._categories = categories;
+        productCounts[supplier._id] = count;
+        categories.forEach(cat => categorySet.add(cat));
+
+        if (filter === "rated" && !isRated) continue;
+        if (filter === "unrated" && !isUnrated) continue;
+        if (filter === "category" && !categories.includes(categoryFilter)) continue;
+
+        filteredSuppliers.push(supplier);
+      }
+
+      updateStatCards(allSuppliers, categorySet);
+      currentPage = 1;
+      applySearchAndSort();
+    }
+
+    function applySearchAndSort() {
+      const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+      const sortOption = document.getElementById("sortSelect").value;
+      let temp = [...filteredSuppliers];
+
+      if (searchTerm) {
+        temp = temp.filter(s =>
+          s.name.toLowerCase().includes(searchTerm) ||
+          s.email.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      switch (sortOption) {
+        case "name-asc": temp.sort((a, b) => a.name.localeCompare(b.name)); break;
+        case "name-desc": temp.sort((a, b) => b.name.localeCompare(a.name)); break;
+        case "rating-asc": temp.sort((a, b) => a.rating - b.rating); break;
+        case "rating-desc": temp.sort((a, b) => b.rating - a.rating); break;
+        case "products-asc": temp.sort((a, b) => productCounts[a._id] - productCounts[b._id]); break;
+        case "products-desc": temp.sort((a, b) => productCounts[b._id] - productCounts[a._id]); break;
+      }
+
+      renderPage(temp);
+    }
+
+    function renderPage(data) {
+      const supplierGrid = document.getElementById("supplierGrid");
+      supplierGrid.innerHTML = "";
+
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const pageData = data.slice(startIndex, endIndex);
+
+      for (const supplier of pageData) {
+        const isRated = supplier.totalCompletedOrders > 0;
+        const isUnrated = supplier.rating === 0 && supplier.totalCompletedOrders === 0;
+        const categories = supplier._categories || [];
+        const count = productCounts[supplier._id] || 0;
+
+        const card = document.createElement("div");
+        card.classList.add("supplier-card");
+        if (isUnrated) card.classList.add("unrated");
+
+        card.innerHTML = `
+          <img src="${supplier.imageUrl}" alt="Supplier Image" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
+          <h3>${supplier.name}</h3>
+          <p><strong>Rating:</strong> ${isRated ? supplier.rating.toFixed(1) : 'Not Rated'}</p>
+          <p><strong>Products Supplied:</strong> ${count}</p>
+          <p><strong>Categories:</strong> ${categories.length > 0 ? categories.join(', ') : 'None'}</p>
+          <div class="action-buttons">
+            <button class="edit-info-btn" onclick="viewSupplier('${supplier._id}')">View More</button>
+          </div>
+        `;
+        supplierGrid.appendChild(card);
+      }
+
+      const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+      document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById("prevPageBtn").disabled = currentPage === 1;
+      document.getElementById("nextPageBtn").disabled = currentPage === totalPages;
+    }
+
+    function setActiveCard(cardId) {
+      document.querySelectorAll('.supplier-stats .stat-card').forEach(card => card.classList.remove('active'));
+      const target = document.getElementById(cardId);
+      if (target) target.classList.add('active');
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await fetch("/components/sidebar.html")
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("sidebar").innerHTML = html;
           document.getElementById("logoutButton").addEventListener("click", async () => {
             await fetch("http://localhost:5000/auth/logout", { method: "POST" });
             localStorage.removeItem("token");
@@ -55,52 +212,79 @@
           }
         });
 
-      const supplierGrid = document.getElementById("supplierGrid");
-      const errorMessage = document.getElementById("errorMessage");
+      const res = await fetch("http://localhost:5000/api/suppliers");
+      allSuppliers = res.ok ? await res.json() : [];
 
-      // Add Supplier card
-      const addCard = document.createElement("div");
-      addCard.classList.add("supplier-card", "add-card");
-      addCard.innerHTML = `<div>+ Add New Supplier</div>`;
-      addCard.onclick = () => window.location.href = "/addSupplier";
-      supplierGrid.appendChild(addCard);
+      document.getElementById("addSupplierBtn").addEventListener("click", () => {
+        window.location.href = "/addSupplier";
+      });
 
-      try {
-        const res = await fetch("http://localhost:5000/api/suppliers");
-        if (!res.ok) throw new Error("Failed to fetch");
+      document.getElementById("totalSuppliers").addEventListener("click", () => {
+        renderSuppliers("all");
+        setActiveCard("totalSuppliers");
+      });
 
-        const suppliers = await res.json();
+      document.getElementById("ratedSuppliers").addEventListener("click", () => {
+        renderSuppliers("rated");
+        setActiveCard("ratedSuppliers");
+      });
 
-        if (suppliers.length === 0) {
-          errorMessage.textContent = "No suppliers found.";
-        } else {
-          suppliers.forEach(supplier => {
-            console.log('SUPPLIER DATA:', supplier); // ✅ Debug log
+      document.getElementById("unratedSuppliers").addEventListener("click", () => {
+        renderSuppliers("unrated");
+        setActiveCard("unratedSuppliers");
+      });
 
-            const card = document.createElement("div");
-            card.classList.add("supplier-card");
-
-            card.innerHTML = `
-              <img src="${supplier.imageUrl}" alt="Supplier Image" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
-              <h3>${supplier.name}</h3>
-              <p><strong>Email:</strong> ${supplier.email}</p>
-              <p><strong>Rating:</strong> ${typeof supplier.rating === 'number' ? supplier.rating.toFixed(1) : 'Not Rated'}</p>
-              <div class="action-buttons">
-                <button class="edit-info-btn" onclick="viewSupplier('${supplier._id}')">View More</button>
-              </div>
-            `;
-            supplierGrid.appendChild(card);
-          });
+      document.getElementById("categorySuppliers").addEventListener("click", async () => {
+        if (uniqueCategories.length === 0) {
+          const categorySet = new Set();
+          for (const supplier of allSuppliers) {
+            const res = await fetch(`http://localhost:5000/api/suppliers/${supplier._id}/products`);
+            if (res.ok) {
+              const products = await res.json();
+              products.forEach(p => {
+                if (p.category?.name) categorySet.add(p.category.name);
+              });
+            }
+          }
+          uniqueCategories = [...categorySet];
         }
-      } catch (error) {
-        errorMessage.textContent = "Failed to load suppliers.";
-        console.error(error);
-      }
-    });
 
-    function viewSupplier(id) {
-      window.location.href = `/supplierDetails?id=${id}`;
-    }
+        if (uniqueCategories.length === 0) return;
+        const selectedCategory = uniqueCategories[categoryIndex];
+        categoryIndex = (categoryIndex + 1) % uniqueCategories.length;
+
+        renderSuppliers("category", selectedCategory);
+        setActiveCard("categorySuppliers");
+      });
+
+      document.getElementById("searchInput").addEventListener("input", () => {
+        currentPage = 1;
+        applySearchAndSort();
+      });
+
+      document.getElementById("sortSelect").addEventListener("change", () => {
+        currentPage = 1;
+        applySearchAndSort();
+      });
+
+      document.getElementById("prevPageBtn").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          applySearchAndSort();
+        }
+      });
+
+      document.getElementById("nextPageBtn").addEventListener("click", () => {
+        const totalPages = Math.ceil(filteredSuppliers.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          applySearchAndSort();
+        }
+      });
+
+      renderSuppliers("all");
+      setActiveCard("totalSuppliers");
+    });
   </script>
 </body>
 </html>

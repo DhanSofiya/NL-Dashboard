@@ -1265,3 +1265,108 @@ body.dark-mode .order-card .order-dates {
   font-size: 13px;
   color: #ffffff;
 }
+/* ============================ SUPPLIER STATS ============================ */
+.supplier-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.supplier-stats .stat-card {
+  flex: 0 0 auto;
+  min-width: 100px;
+  padding: 1rem;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.supplier-stats .stat-card:nth-child(1) {
+  background-color: #4caf50; /* New */
+}
+.supplier-stats .stat-card:nth-child(2) {
+  background-color: #2196f3; /* Total */
+}
+.supplier-stats .stat-card:nth-child(3) {
+  background-color: #3f51b5; /* Rated */
+}
+.supplier-stats .stat-card:nth-child(4) {
+  background-color: #ff9800; /* Unrated */
+}
+.supplier-stats .stat-card:nth-child(5) {
+  background-color: #26c6da; /* Category */
+}
+
+.supplier-stats .stat-card.active {
+  outline: 2px solid #000;
+  color: #000;
+  background-color: #b2dfdb;
+}
+
+/* Dark Mode */
+body.dark-mode .supplier-stats .stat-card {
+  color: #fff;
+}
+
+body.dark-mode .supplier-stats .stat-card.active {
+  outline: 2px solid #fff;
+  color: #000;
+  background-color: #80cbc4;
+}
+/* === Supplier Pagination Controls === */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pagination-controls button {
+  font-size: 1.3rem;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 6px;
+  background-color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pagination-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-controls span {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Dark Mode Support */
+body.dark-mode .pagination-controls button {
+  background-color: #444;
+  color: #fff;
+}
+
+body.dark-mode .pagination-controls button:disabled {
+  background-color: #555;
+  color: #888;
+}
+
+body.dark-mode .pagination-controls span {
+  color: #ddd;
+}

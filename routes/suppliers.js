@@ -225,7 +225,7 @@ router.post('/:id/sendBulkOrderEmail', async (req, res) => {
     const mailOptions = {
       from: `"NL-Dashboard Orders" <niltiva@proton.me>`,
       to: supplier.email,
-      subject: `🛒 NL-Dashboard Order – Multiple Items`,
+      subject: `🛒 NL-Dashboard Order – Order Placement`,
       html: `
         <p>Hi ${supplier.name},</p>
         <p>We would like to place an order for the following items:</p>
@@ -264,10 +264,10 @@ router.post('/:id/sendBulkOrderEmail', async (req, res) => {
   }
 });
 
-// ✅ GET all products linked to a supplier
+// ✅ GET all products linked to a supplier with category populated
 router.get('/:id/products', async (req, res) => {
   try {
-    const products = await Product.find({ supplier: req.params.id }).select('name');
+    const products = await Product.find({ supplier: req.params.id }).populate('category', 'name');
     res.json(products);
   } catch (error) {
     console.error("❌ Failed to fetch supplier's products:", error);
