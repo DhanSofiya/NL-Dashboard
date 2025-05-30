@@ -23,7 +23,7 @@ const SupplierOrderSchema = new mongoose.Schema({
   ],
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'completed', 'delayed'], // ✅ 'delayed' added
+    enum: ['pending', 'confirmed', 'shipped', 'completed', 'delayed'],
     default: 'pending'
   },
   deliveryDate: {
