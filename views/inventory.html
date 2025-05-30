@@ -1,13 +1,14 @@
 
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inventory Management | NL-Dashboard</title>
-  <link rel="stylesheet" href="/css/styles.css"/>
-  <script defer src="/js/orderSidebar.js"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inventory Management | NL-Dashboard</title>
+<link href="/css/styles.css" rel="stylesheet"/>
+<script defer="" src="/js/orderSidebar.js"></script>
+<style>
     .stat-card.active {
       border: 2px solid #000;
       box-shadow: 0 0 0 3px #999 inset;
@@ -58,54 +59,53 @@
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <div id="sidebar"></div>
+<div class="wrapper">
+<div id="sidebar"></div>
+<div class="content-container">
+<h1>Inventory Management</h1>
+<div class="inventory-stats">
+<div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
+<div class="stat-card" id="totalProducts">Total: 0</div>
+<div class="stat-card" id="outOfStock">Out of Stock: 0</div>
+<div class="stat-card" id="lowStock">Low Stock: 0</div>
+<div class="stat-card" id="totalCategories">Category: 0</div>
+<div class="stat-card" id="totalSuppliers">Supplier: 0</div>
+</div>
+<div class="inventory-controls">
+<div class="controls-wrapper"><div class="control-group"><span class="active-filter-label" id="activeFilterLabel">Showing: All Products</span></div>
+<div class="control-group">
+<input id="searchInput" placeholder="Search products..." type="search"/>
+</div>
+<div class="control-group">
+<select id="sortSelect">
+<option value="">Sort By</option>
+<option value="name-asc">Name A–Z</option>
+<option value="name-desc">Name Z–A</option>
+<option value="price-asc">Price Low–High</option>
+<option value="price-desc">Price High–Low</option>
+<option value="stock-asc">Stock Low–High</option>
+<option value="stock-desc">Stock High–Low</option>
+</select>
+</div>
+</div>
+</div>
+<section class="inventory-list">
+<div class="inventory-grid" id="inventoryGrid"></div>
+<div class="pagination-controls">
+<button id="prevPageBtn">◀️</button>
+<span id="pageIndicator">Page 1 of 1</span>
+<button id="nextPageBtn">▶️</button>
+</div>
+</section>
+</div>
+</div>
+<div id="sidebarComponent"></div>
+<script>function updateActiveFilterLabel(label, omitPrefix = false) {
+  const field = document.getElementById("activeFilterLabel");
+  if (field) field.textContent = omitPrefix ? label : `Showing: ${label}`;
+}
 
-    <div class="content-container">
-      <h1>Inventory Management</h1>
 
-      <div class="inventory-stats">
-        <div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
-        <div class="stat-card" id="totalProducts">Total: 0</div>
-        <div class="stat-card" id="outOfStock">Out of Stock: 0</div>
-        <div class="stat-card" id="lowStock">Low Stock: 0</div>
-        <div class="stat-card" id="totalCategories">Category: 0</div>
-        <div class="stat-card" id="totalSuppliers">Supplier: 0</div>
-      </div>
-
-      <div class="inventory-controls">
-        <div class="controls-wrapper">
-          <div class="control-group">
-            <input type="search" id="searchInput" placeholder="Search products..." />
-          </div>
-          <div class="control-group">
-            <select id="sortSelect">
-              <option value="">Sort By</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-              <option value="price-asc">Price Low–High</option>
-              <option value="price-desc">Price High–Low</option>
-              <option value="stock-asc">Stock Low–High</option>
-              <option value="stock-desc">Stock High–Low</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <section class="inventory-list">
-        <div class="inventory-grid" id="inventoryGrid"></div>
-        <div class="pagination-controls">
-          <button id="prevPageBtn">◀️</button>
-          <span id="pageIndicator">Page 1 of 1</span>
-          <button id="nextPageBtn">▶️</button>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <div id="sidebarComponent"></div>
-
-  <script>
     let allProducts = [];
     let categoryIndex = 0;
     let supplierIndex = 0;
@@ -137,45 +137,55 @@
       document.getElementById("totalSuppliers").innerText = `🏢 Supplier: ${suppliers.size}`;
     }
 
-    function renderProducts(products) {
-      const inventoryGrid = document.getElementById("inventoryGrid");
-      inventoryGrid.innerHTML = "";
+function renderProducts(products) {
+  const inventoryGrid = document.getElementById("inventoryGrid");
+  inventoryGrid.innerHTML = "";
 
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const pageData = products.slice(startIndex, endIndex);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const pageData = products.slice(startIndex, endIndex);
 
-      pageData.forEach(product => {
-        const categoryText = product.category?.name || "Unknown";
-        const supplierText = product.supplier?.name || "Unknown";
-        const supplierId = product.supplier?._id || "";
-        const imagePath = product.image_uri || "/images/placeholder.jpg";
-        const price = product.price?.toFixed(2) ?? "0.00";
-        const supplierPrice = product.supplier_price?.toFixed(2) ?? "0.00";
+  pageData.forEach(product => {
+    const categoryText = product.category?.name || "Unknown";
+    const supplierText = product.supplier?.name || "Unknown";
+    const supplierId = product.supplier?._id || "";
+    const imagePath = product.image_uri || "/images/placeholder.jpg";
+    const price = product.price?.toFixed(2) ?? "0.00";
+    const supplierPrice = product.supplier_price?.toFixed(2) ?? "0.00";
+    const stock = product.stock ?? 0;
 
-        const card = document.createElement("div");
-        card.classList.add("supplier-card");
-        card.innerHTML = `
-          <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
-          <h3>${product.name}</h3>
-          <p><strong>Category:</strong> ${categoryText}</p>
-          <p><strong>Supplier:</strong> ${supplierText}</p>
-          <p><strong>Price:</strong> RM ${price}</p>
-          <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
-          <p><strong>Stock:</strong> ${product.stock ?? 0}</p>
-          <div class="action-buttons">
-            <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
-            <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
-          </div>
-        `;
-        inventoryGrid.appendChild(card);
-      });
+    let stockEmoji = "";
+    let stockClass = "";
 
-      const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-      document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
-      document.getElementById("prevPageBtn").disabled = currentPage === 1;
-      document.getElementById("nextPageBtn").disabled = currentPage === totalPages;
+    if (stock === 0) {
+      stockEmoji = "❌";
+      stockClass = "no-stock";
+    } else if (stock < 5) {
+      stockEmoji = "⚠️";
+      stockClass = "low-stock";
     }
+
+    const card = document.createElement("div");
+    card.classList.add("supplier-card");
+    if (stockClass) card.classList.add(stockClass);
+
+    card.innerHTML = `
+      <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
+      <h3>${product.name}</h3>
+      <p><strong>Category:</strong> ${categoryText}</p>
+      <p><strong>Supplier:</strong> ${supplierText}</p>
+      <p><strong>Price:</strong> RM ${price}</p>
+      <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
+      <p> ${stockEmoji} <strong>Stock:</strong> ${stock}</p>
+      <div class="action-buttons">
+        <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
+        <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
+      </div>
+    `;
+    inventoryGrid.appendChild(card);
+  });
+}
+
 
     function filterAndRender() {
       const searchTerm = document.getElementById("searchInput").value.toLowerCase();
@@ -276,18 +286,21 @@
       document.getElementById("totalProducts").addEventListener("click", () => {
         renderProducts(allProducts);
         setActiveStatCard("totalProducts");
+          updateActiveFilterLabel("All Products");
       });
 
       document.getElementById("outOfStock").addEventListener("click", () => {
         const outOfStock = allProducts.filter(p => p.stock === 0);
         renderProducts(outOfStock);
         setActiveStatCard("outOfStock");
+          updateActiveFilterLabel("Out of Stock");
       });
 
       document.getElementById("lowStock").addEventListener("click", () => {
         const lowStock = allProducts.filter(p => p.stock > 0 && p.stock < 5);
         renderProducts(lowStock);
         setActiveStatCard("lowStock");
+          updateActiveFilterLabel("Low Stock");
       });
 
       document.getElementById("totalCategories").addEventListener("click", () => {
@@ -299,6 +312,7 @@
 
         renderProducts(filtered);
         setActiveStatCard("totalCategories");
+          updateActiveFilterLabel(`Category: ${selected}`, true);
         categoryIndex = (categoryIndex + 1) % categories.length;
       });
 
@@ -311,9 +325,10 @@
 
         renderProducts(filtered);
         setActiveStatCard("totalSuppliers");
+          updateActiveFilterLabel(`Supplier: ${selected}`, true);
         supplierIndex = (supplierIndex + 1) % suppliers.length;
       });
     });
   </script>
 </body>
-</html>
+</html

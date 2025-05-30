@@ -1036,6 +1036,39 @@ body.dark-mode .inventory-controls select {
   color: #fff;
 }
 
+/* === ACTIVE STAT FILTER LABEL (FIXED WIDTH) === */
+#activeFilterLabel {
+  flex: none;
+  width: 235px;
+  height: 42px;
+  font-size: 1rem;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid #000000;
+  box-sizing: border-box;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 5px; /* adjust as needed */
+  background-color: #fff;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark-mode #activeFilterLabel {
+  background-color: #000;
+  color: #fff;
+}
+
+body.dark-mode #activeFilterLabel {
+  background-color: #000;
+  color: #fff;
+}
+
+
 body.dark-mode .stat-card.active {
   outline: 2px solid #fff;
   color: #000;
@@ -1055,6 +1088,11 @@ body.dark-mode .stat-card.active {
 .order-card .order-total {
   font-weight: bold;
   margin-bottom: 12px;
+}
+
+.inventory-controls input[type="search"] {
+  flex: 2; /* Increase from flex: 1 if already set */
+  max-width: 300px; /* Optional explicit width cap */
 }
 
 /* ----------------------------------------------
@@ -1369,4 +1407,31 @@ body.dark-mode .pagination-controls button:disabled {
 
 body.dark-mode .pagination-controls span {
   color: #ddd;
+}
+/* === Inventory Visual States === */
+
+/* No Stock: Red dashed border, softer tone in light and dark */
+.supplier-card.no-stock {
+  border: 2px dashed #d9534f;
+  background-color: #eb9c9c;
+  opacity: 0.95;
+}
+
+body.dark-mode .supplier-card.no-stock {
+  border: 2px dashed #880000;
+  background-color: #bb4949;
+  opacity: 0.95;
+}
+
+/* Low Stock: Orange dashed border, slightly dimmed */
+.supplier-card.low-stock {
+  border: 2px dashed #f0ad4e;
+  background-color:#f0cb7d;
+  opacity: 0.95;
+}
+
+body.dark-mode .supplier-card.low-stock {
+  border: 2px dashed #ffc062;
+  background-color: #ad7739;
+  opacity: 0.95;
 }
