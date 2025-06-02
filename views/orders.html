@@ -34,11 +34,20 @@
       <section class="orders-section">
         <h2>Supplier Orders</h2>
         <div id="supplierOrdersContainer"></div>
+        <div class="pagination-controls">
+          <button id="supplierPrevPageBtn">◀️</button>
+          <span id="supplierPageIndicator">Page 1 of X</span>
+          <button id="supplierNextPageBtn">▶️</button>
+        </div>
       </section>
     </div>
   </div>
 
   <script>
+    const SUPPLIER_ORDERS_PER_PAGE = 5;
+    let supplierOrders = [];
+    let supplierCurrentPage = 1;
+
     async function fetchOrders() {
       try {
         const res = await fetch("http://localhost:5000/api/orders");
@@ -66,110 +75,137 @@
       try {
         const res = await fetch("http://localhost:5000/api/supplier-orders");
         const orders = await res.json();
-        const container = document.getElementById("supplierOrdersContainer");
-        container.innerHTML = "";
-
-        orders.forEach((order) => {
-          const card = document.createElement("div");
-          card.className = "order-card";
-
-          let total = 0;
-          const productList = order.products.map(p => {
-            const name = p.product?.name || `Product ID: ${p.product}`;
-            const unitPrice = p.product?.supplier_price ?? 0;
-            const quantity = p.quantity;
-            const subtotal = unitPrice * quantity;
-            total += subtotal;
-
-            return `
-              <div class="product-entry">
-                <div><strong>Product:</strong> ${name}</div>
-                <div><strong>Quantity:</strong> ${quantity}</div>
-                <div><strong>Unit Price:</strong> RM ${unitPrice.toFixed(2)}</div>
-                <div><strong>Subtotal:</strong> RM ${subtotal.toFixed(2)}</div>
-              </div>
-              <hr>
-            `;
-          }).join("");
-
-          const showReceiveBtn = order.status === "shipped"
-            ? `<button class="receive-btn" data-id="${order._id}">Received</button>`
-            : "";
-
-          card.innerHTML = `
-            <button class="order-delete-btn" title="Delete" data-id="${order._id}">x</button>
-            <div class="order-products">${productList}</div>
-            <div class="order-total"><strong>Total:</strong> RM ${total.toFixed(2)}</div>
-<div class="order-status">
-  <div class="order-dates">
-    <span><strong>Required By:</strong> ${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}</span>
-    <span><strong>Updated At:</strong> ${order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A'}</span>
-  </div>
-  <span class="status ${order.status}">${order.status}</span>
-</div>
-
-            <div class="order-supplier">
-              <strong>Supplier:</strong> ${order.supplier?.name || 'N/A'}<br>
-              <strong>Contact:</strong> ${order.supplier?.email || 'N/A'}
-            </div>
-            <div class="order-actions">${showReceiveBtn}</div>
-          `;
-
-          container.appendChild(card);
-        });
-
-        // Event: Delete Order
-        document.querySelectorAll(".order-delete-btn").forEach(button => {
-          button.addEventListener("click", async () => {
-            const orderId = button.dataset.id;
-            const confirm = window.confirm("Are you sure you want to delete this supplier order?");
-            if (!confirm) return;
-
-            try {
-              const res = await fetch(`http://localhost:5000/api/supplier-orders/${orderId}`, {
-                method: "DELETE"
-              });
-              const data = await res.json();
-              alert(data.message);
-              fetchSupplierOrders();
-            } catch (err) {
-              console.error("Error deleting supplier order:", err);
-              alert("❌ Failed to delete supplier order.");
-            }
-          });
-        });
-
-        // Event: Mark as Received
-        document.querySelectorAll(".receive-btn").forEach(button => {
-          button.addEventListener("click", async () => {
-            const orderId = button.dataset.id;
-            const confirm = window.confirm("Mark this order as received and complete?");
-            if (!confirm) return;
-
-            try {
-              const res = await fetch(`http://localhost:5000/api/supplier-orders/complete/${orderId}`, {
-                method: "PUT"
-              });
-              const data = await res.json();
-              alert(data.message);
-              fetchSupplierOrders();
-            } catch (err) {
-              console.error("Error completing supplier order:", err);
-              alert("❌ Failed to complete supplier order.");
-            }
-          });
-        });
-
+        supplierOrders = orders;
+        supplierCurrentPage = 1;
+        renderSupplierOrdersPage();
       } catch (err) {
         console.error("Error loading supplier orders:", err);
       }
     }
 
+    function renderSupplierOrdersPage() {
+      const container = document.getElementById("supplierOrdersContainer");
+      container.innerHTML = "";
+
+      const startIndex = (supplierCurrentPage - 1) * SUPPLIER_ORDERS_PER_PAGE;
+      const pageData = supplierOrders.slice(startIndex, startIndex + SUPPLIER_ORDERS_PER_PAGE);
+
+      pageData.forEach((order) => {
+        const card = document.createElement("div");
+        card.className = "order-card";
+
+        let total = 0;
+        const productList = order.products.map(p => {
+          const name = p.product?.name || `Product ID: ${p.product}`;
+          const unitPrice = p.product?.supplier_price ?? 0;
+          const quantity = p.quantity;
+          const subtotal = unitPrice * quantity;
+          total += subtotal;
+
+          return `
+            <div class="product-entry">
+              <div><strong>Product:</strong> ${name}</div>
+              <div><strong>Quantity:</strong> ${quantity}</div>
+              <div><strong>Unit Price:</strong> RM ${unitPrice.toFixed(2)}</div>
+              <div><strong>Subtotal:</strong> RM ${subtotal.toFixed(2)}</div>
+            </div>
+            <hr>
+          `;
+        }).join("");
+
+        const showReceiveBtn = order.status === "shipped"
+          ? `<button class="receive-btn" data-id="${order._id}">Received</button>`
+          : "";
+
+        card.innerHTML = `
+          <button class="order-delete-btn" title="Delete" data-id="${order._id}">x</button>
+          <div class="order-products">${productList}</div>
+          <div class="order-total"><strong>Total:</strong> RM ${total.toFixed(2)}</div>
+          <div class="order-status">
+            <div class="order-dates">
+              <span><strong>Required By:</strong> ${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}</span>
+              <span><strong>Updated At:</strong> ${order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A'}</span>
+            </div>
+            <span class="status ${order.status}">${order.status}</span>
+          </div>
+          <div class="order-supplier">
+            <strong>Supplier:</strong> ${order.supplier?.name || 'N/A'}<br>
+            <strong>Contact:</strong> ${order.supplier?.email || 'N/A'}
+          </div>
+          <div class="order-actions">${showReceiveBtn}</div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      setupSupplierPagination();
+      setupActionButtons();
+    }
+
+    function setupSupplierPagination() {
+      const totalPages = Math.ceil(supplierOrders.length / SUPPLIER_ORDERS_PER_PAGE);
+      document.getElementById("supplierPageIndicator").textContent = `Page ${supplierCurrentPage} of ${totalPages}`;
+      document.getElementById("supplierPrevPageBtn").disabled = supplierCurrentPage === 1;
+      document.getElementById("supplierNextPageBtn").disabled = supplierCurrentPage === totalPages;
+    }
+
+    function setupActionButtons() {
+      document.querySelectorAll(".order-delete-btn").forEach(button => {
+        button.addEventListener("click", async () => {
+          const orderId = button.dataset.id;
+          const confirmDelete = window.confirm("Are you sure you want to delete this supplier order?");
+          if (!confirmDelete) return;
+
+          try {
+            const res = await fetch(`http://localhost:5000/api/supplier-orders/${orderId}`, {
+              method: "DELETE"
+            });
+            const data = await res.json();
+            alert(data.message);
+            await fetchSupplierOrders();
+          } catch (err) {
+            console.error("Error deleting supplier order:", err);
+            alert("❌ Failed to delete supplier order.");
+          }
+        });
+      });
+
+      document.querySelectorAll(".receive-btn").forEach(button => {
+        button.addEventListener("click", async () => {
+          const orderId = button.dataset.id;
+          const confirmReceive = window.confirm("Mark this order as received and complete?");
+          if (!confirmReceive) return;
+
+          try {
+            const res = await fetch(`http://localhost:5000/api/supplier-orders/complete/${orderId}`, {
+              method: "PUT"
+            });
+            const data = await res.json();
+            alert(data.message);
+            await fetchSupplierOrders();
+          } catch (err) {
+            console.error("Error completing supplier order:", err);
+            alert("❌ Failed to complete supplier order.");
+          }
+        });
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (e.target.id === "supplierPrevPageBtn" && supplierCurrentPage > 1) {
+        supplierCurrentPage--;
+        renderSupplierOrdersPage();
+      } else if (e.target.id === "supplierNextPageBtn" && supplierCurrentPage < Math.ceil(supplierOrders.length / SUPPLIER_ORDERS_PER_PAGE)) {
+        supplierCurrentPage++;
+        renderSupplierOrdersPage();
+      }
+    });
+
     document.addEventListener("DOMContentLoaded", async () => {
       await fetch("/components/sidebar.html")
         .then(response => response.text())
-        .then(data => document.getElementById("sidebar").innerHTML = data)
-        .then(() => {
+        .then(data => {
+          document.getElementById("sidebar").innerHTML = data;
           document.getElementById("logoutButton").addEventListener("click", async () => {
             await fetch("http://localhost:5000/auth/logout", { method: "POST" });
             localStorage.removeItem("token");
