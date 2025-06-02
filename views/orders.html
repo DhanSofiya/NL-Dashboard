@@ -8,38 +8,33 @@
 </head>
 <body>
   <div class="wrapper">
-<div id="sidebar"></div>
-
-<script>
-  fetch('/components/sidebar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("sidebar").innerHTML = html;
-
-      // After sidebar is inserted, hide role-restricted links
-      fetch('/api/session-role')
-        .then(res => res.json())
-        .then(data => {
-          if (data.role === 'Staff') {
-            const financeItem = document.querySelector("#financeLink");
-            const usersItem = document.querySelector("#usersLink");
-            if (financeItem) financeItem.style.display = "none";
-            if (usersItem) usersItem.style.display = "none";
-          }
-        })
-        .catch(err => console.error("Role fetch error:", err));
-    });
-</script>
+    <div id="sidebar"></div>
 
     <div class="content-container">
       <h1 class="dashboard-title">Order Management</h1> <br>
 
-      <!-- Customer Orders Component -->
-      <div id="customerOrdersComponent"></div>
+      <!-- Customer Orders -->
+      <section class="orders-section">
+        <h2>Customer Orders</h2>
+        <select id="customerSortSelect">
+          <option value="status">Sort by Status</option>
+          <option value="recent">Most Recent</option>
+        </select>
+        <div id="customerOrdersContainer"></div>
+        <div class="pagination-controls">
+          <button id="customerPrevPageBtn">◀️</button>
+          <span id="customerPageIndicator">Page 1 of X</span>
+          <button id="customerNextPageBtn">▶️</button>
+        </div>
+      </section>
 
       <!-- Supplier Orders -->
       <section class="orders-section">
         <h2>Supplier Orders</h2>
+        <select id="supplierSortSelect">
+          <option value="status">Sort by Status</option>
+          <option value="recent">Most Recent</option>
+        </select>
         <div id="supplierOrdersContainer"></div>
         <div class="pagination-controls">
           <button id="supplierPrevPageBtn">◀️</button>
@@ -52,53 +47,99 @@
 
   <script>
     const SUPPLIER_ORDERS_PER_PAGE = 3;
+    const CUSTOMER_ORDERS_PER_PAGE = 3;
     let supplierOrders = [];
     let supplierCurrentPage = 1;
+    let customerOrders = [];
+    let customerCurrentPage = 1;
 
     async function fetchCustomerOrders() {
       try {
         const res = await fetch("http://localhost:5000/api/orders");
-        const orders = await res.json();
-        const tbody = document.querySelector("#customerOrdersTable tbody");
-        tbody.innerHTML = "";
+        let orders = await res.json();
 
-        orders.forEach((order, index) => {
-          const itemsHTML = order.items.map(item => {
-            const name = item.product?.name || "Unnamed";
-            return `${name} x ${item.quantity}`;
-          }).join("<br>");
+        const sortValue = document.getElementById("customerSortSelect")?.value || "recent";
+        const STATUS_PRIORITY = {
+          "pending": 1, "shipped": 2, "packed": 3,
+          "picked_up": 4, "in_transit": 5,
+          "delivered": 6, "completed": 7, "cancelled": 8
+        };
 
-          let actionHTML = "";
-          if (order.status === "pending") {
-            actionHTML = `
-              <button class="pack-btn" data-id="${order._id}">Pack</button>
-              <button class="cancel-btn" data-id="${order._id}">Cancel</button>
-            `;
-          }
+        if (sortValue === "status") {
+          orders.sort((a, b) => (STATUS_PRIORITY[a.status] || 99) - (STATUS_PRIORITY[b.status] || 99));
+        } else {
+          orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
 
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${order.orderId}</td>
-            <td>${order.customerName}</td>
-            <td>${order.customerPhone}</td>
-            <td><span class="status ${order.status}">${order.status}</span></td>
-            <td>${order.riderName || "Rider"}</td>
-            <td>RM ${order.riderCommission?.toFixed(2)}</td>
-            <td>RM ${order.platformProfit?.toFixed(2)}</td>
-            <td>${order.deliveryLocation?.address || "-"}</td>
-            <td>${itemsHTML}</td>
-            <td>${actionHTML}</td>
-          `;
-          tbody.appendChild(row);
-        });
-
-        setupCustomerOrderButtons();
+        customerOrders = orders;
+        customerCurrentPage = 1;
+        renderCustomerOrdersPage();
       } catch (err) {
         console.error("❌ Error loading customer orders:", err);
       }
     }
 
+    function renderCustomerOrdersPage() {
+      const container = document.getElementById("customerOrdersContainer");
+      container.innerHTML = "";
+
+      const start = (customerCurrentPage - 1) * CUSTOMER_ORDERS_PER_PAGE;
+      const pageData = customerOrders.slice(start, start + CUSTOMER_ORDERS_PER_PAGE);
+
+      pageData.forEach(order => {
+        const card = document.createElement("div");
+        card.className = "order-card";
+
+        const itemsHTML = order.items.map(item => {
+          const name = item.product?.name || "Unnamed";
+          return `<div><strong>${name}</strong></div><div>Quantity: ${item.quantity}</div>`;
+        }).join("");
+
+       const statusHTML = `<div class="order-status-inline"><span class="status ${order.status}">${order.status}</span></div>`;
+       const actionsHTML = order.status === "pending"
+  ? `<div class="order-status-section">
+       <button class="pack-btn" data-id="${order._id}">Pack</button>
+       <button class="cancel-btn" data-id="${order._id}">Cancel</button>
+     </div>`
+  : "";
+
+
+        card.innerHTML = `
+          <div class="order-card-content">
+            <div class="order-status-section">${actionsHTML}</div>
+            <div class="order-details-section">
+  <div class="details-columns">
+    <div class="product-info">
+      ${itemsHTML}
+    </div>
+    <div class="customer-info">
+      <div><strong>Customer's Contact:</strong> ${order.customerPhone}</div>
+      <div><strong>Address:</strong> ${order.deliveryLocation?.address || "-"}</div>
+    </div>
+  </div>
+</div>
+
+            </div>
+            <div class="order-summary-section order-summary">
+  <div><strong>Total:</strong> RM ${order.totalPrice.toFixed(2)}</div>
+  <div><strong>Rider:</strong> ${order.riderName || "Rider"}</div>
+  <div><strong>Commission:</strong> RM ${order.riderCommission?.toFixed(2)}</div>
+  ${statusHTML}
+</div>
+
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      setupCustomerOrderButtons();
+
+      const totalPages = Math.ceil(customerOrders.length / CUSTOMER_ORDERS_PER_PAGE);
+      document.getElementById("customerPageIndicator").textContent = `Page ${customerCurrentPage} of ${totalPages}`;
+      document.getElementById("customerPrevPageBtn").disabled = customerCurrentPage === 1;
+      document.getElementById("customerNextPageBtn").disabled = customerCurrentPage === totalPages;
+    }
     function setupCustomerOrderButtons() {
       document.querySelectorAll(".pack-btn").forEach(button => {
         button.addEventListener("click", async () => {
@@ -110,9 +151,9 @@
       document.querySelectorAll(".cancel-btn").forEach(button => {
         button.addEventListener("click", async () => {
           const orderId = button.dataset.id;
-          const confirmCancel = window.confirm("Cancel this order?");
-          if (!confirmCancel) return;
-          await updateCustomerOrderStatus(orderId, "cancelled");
+          if (window.confirm("Cancel this order?")) {
+            await updateCustomerOrderStatus(orderId, "cancelled");
+          }
         });
       });
     }
@@ -137,12 +178,26 @@
     async function fetchSupplierOrders() {
       try {
         const res = await fetch("http://localhost:5000/api/supplier-orders");
-        const orders = await res.json();
+        let orders = await res.json();
+
+        const sortValue = document.getElementById("supplierSortSelect")?.value || "recent";
+        const STATUS_PRIORITY = {
+          "pending": 1, "shipped": 2, "packed": 3,
+          "picked_up": 4, "in_transit": 5,
+          "delivered": 6, "completed": 7, "cancelled": 8
+        };
+
+        if (sortValue === "status") {
+          orders.sort((a, b) => (STATUS_PRIORITY[a.status] || 99) - (STATUS_PRIORITY[b.status] || 99));
+        } else {
+          orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
         supplierOrders = orders;
         supplierCurrentPage = 1;
         renderSupplierOrdersPage();
       } catch (err) {
-        console.error("Error loading supplier orders:", err);
+        console.error("❌ Error loading supplier orders:", err);
       }
     }
 
@@ -150,10 +205,10 @@
       const container = document.getElementById("supplierOrdersContainer");
       container.innerHTML = "";
 
-      const startIndex = (supplierCurrentPage - 1) * SUPPLIER_ORDERS_PER_PAGE;
-      const pageData = supplierOrders.slice(startIndex, startIndex + SUPPLIER_ORDERS_PER_PAGE);
+      const start = (supplierCurrentPage - 1) * SUPPLIER_ORDERS_PER_PAGE;
+      const pageData = supplierOrders.slice(start, start + SUPPLIER_ORDERS_PER_PAGE);
 
-      pageData.forEach((order) => {
+      pageData.forEach(order => {
         const card = document.createElement("div");
         card.className = "order-card";
 
@@ -176,7 +231,7 @@
           `;
         }).join("");
 
-        const showReceiveBtn = order.status === "shipped"
+        const receiveBtn = order.status === "shipped"
           ? `<button class="receive-btn" data-id="${order._id}">Received</button>`
           : "";
 
@@ -195,7 +250,7 @@
             <strong>Supplier:</strong> ${order.supplier?.name || 'N/A'}<br>
             <strong>Contact:</strong> ${order.supplier?.email || 'N/A'}
           </div>
-          <div class="order-actions">${showReceiveBtn}</div>
+          <div class="order-actions">${receiveBtn}</div>
         `;
 
         container.appendChild(card);
@@ -204,7 +259,6 @@
       setupSupplierPagination();
       setupActionButtons();
     }
-
     function setupSupplierPagination() {
       const totalPages = Math.ceil(supplierOrders.length / SUPPLIER_ORDERS_PER_PAGE);
       document.getElementById("supplierPageIndicator").textContent = `Page ${supplierCurrentPage} of ${totalPages}`;
@@ -216,19 +270,18 @@
       document.querySelectorAll(".order-delete-btn").forEach(button => {
         button.addEventListener("click", async () => {
           const orderId = button.dataset.id;
-          const confirmDelete = window.confirm("Delete this supplier order?");
-          if (!confirmDelete) return;
-
-          try {
-            const res = await fetch(`http://localhost:5000/api/supplier-orders/${orderId}`, {
-              method: "DELETE"
-            });
-            const data = await res.json();
-            alert(data.message);
-            await fetchSupplierOrders();
-          } catch (err) {
-            console.error("Error deleting supplier order:", err);
-            alert("❌ Failed to delete supplier order.");
+          if (window.confirm("Delete this supplier order?")) {
+            try {
+              const res = await fetch(`http://localhost:5000/api/supplier-orders/${orderId}`, {
+                method: "DELETE"
+              });
+              const data = await res.json();
+              alert(data.message);
+              fetchSupplierOrders();
+            } catch (err) {
+              console.error("❌ Error deleting supplier order:", err);
+              alert("Failed to delete supplier order.");
+            }
           }
         });
       });
@@ -236,29 +289,45 @@
       document.querySelectorAll(".receive-btn").forEach(button => {
         button.addEventListener("click", async () => {
           const orderId = button.dataset.id;
-          const confirmReceive = window.confirm("Mark this order as received?");
-          if (!confirmReceive) return;
-
-          try {
-            const res = await fetch(`http://localhost:5000/api/supplier-orders/complete/${orderId}`, {
-              method: "PUT"
-            });
-            const data = await res.json();
-            alert(data.message);
-            await fetchSupplierOrders();
-          } catch (err) {
-            console.error("Error completing supplier order:", err);
-            alert("❌ Failed to complete supplier order.");
+          if (window.confirm("Mark this order as received?")) {
+            try {
+              const res = await fetch(`http://localhost:5000/api/supplier-orders/complete/${orderId}`, {
+                method: "PUT"
+              });
+              const data = await res.json();
+              alert(data.message);
+              fetchSupplierOrders();
+            } catch (err) {
+              console.error("❌ Failed to complete supplier order:", err);
+              alert("Failed to complete order.");
+            }
           }
         });
       });
     }
 
+    document.getElementById("customerPrevPageBtn").addEventListener("click", () => {
+      if (customerCurrentPage > 1) {
+        customerCurrentPage--;
+        renderCustomerOrdersPage();
+      }
+    });
+
+    document.getElementById("customerNextPageBtn").addEventListener("click", () => {
+      if (customerCurrentPage < Math.ceil(customerOrders.length / CUSTOMER_ORDERS_PER_PAGE)) {
+        customerCurrentPage++;
+        renderCustomerOrdersPage();
+      }
+    });
+
     document.addEventListener("click", (e) => {
       if (e.target.id === "supplierPrevPageBtn" && supplierCurrentPage > 1) {
         supplierCurrentPage--;
         renderSupplierOrdersPage();
-      } else if (e.target.id === "supplierNextPageBtn" && supplierCurrentPage < Math.ceil(supplierOrders.length / SUPPLIER_ORDERS_PER_PAGE)) {
+      } else if (
+        e.target.id === "supplierNextPageBtn" &&
+        supplierCurrentPage < Math.ceil(supplierOrders.length / SUPPLIER_ORDERS_PER_PAGE)
+      ) {
         supplierCurrentPage++;
         renderSupplierOrdersPage();
       }
@@ -267,8 +336,9 @@
     document.addEventListener("DOMContentLoaded", async () => {
       await fetch("/components/sidebar.html")
         .then(response => response.text())
-        .then(data => {
-          document.getElementById("sidebar").innerHTML = data;
+        .then(html => {
+          document.getElementById("sidebar").innerHTML = html;
+
           document.getElementById("logoutButton").addEventListener("click", async () => {
             await fetch("http://localhost:5000/auth/logout", { method: "POST" });
             localStorage.removeItem("token");
@@ -286,13 +356,10 @@
           }
         });
 
-      await fetch("/components/customer-order.html")
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById("customerOrdersComponent").innerHTML = html;
-          fetchCustomerOrders();
-        });
+      document.getElementById("customerSortSelect").addEventListener("change", fetchCustomerOrders);
+      document.getElementById("supplierSortSelect").addEventListener("change", fetchSupplierOrders);
 
+      await fetchCustomerOrders();
       await fetchSupplierOrders();
     });
   </script>

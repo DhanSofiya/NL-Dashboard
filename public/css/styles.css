@@ -1452,3 +1452,215 @@ body.dark-mode .supplier-card.low-stock {
       border-radius: 5px;
       cursor: pointer;
     }
+
+/* Flex container for card content layout */
+.order-card-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Section structure */
+.order-status-section,
+.order-details-section,
+.order-summary-section {
+  flex: 1;
+}
+
+/* Right-aligned for price & commission */
+.order-summary {
+  text-align: right;
+}
+
+.status.pending {
+  background-color: #ffecb3;
+  color: #ff9800;
+}
+
+.status.packed {
+  background-color: #d1c4e9;
+  color: #673ab7;
+}
+
+.status.cancelled {
+  background-color: #ffcdd2;
+  color: #f44336;
+}
+
+.status.picked_up {
+  background-color: #ffe082;
+  color: #ff6f00;
+}
+
+.status.in_transit {
+  background-color: #b3e5fc;
+  color: #0288d1;
+}
+
+.status.delivered {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.status.completed {
+  background-color: #aed581;
+  color: #558b2f;
+}
+body.dark-mode .status.pending {
+  background-color: #664400;
+  color: orange;
+}
+
+body.dark-mode .status.packed {
+  background-color: #3e2a63;
+  color: #b39ddb;
+}
+
+body.dark-mode .status.cancelled {
+  background-color: #5a1e1e;
+  color: #f44336;
+}
+
+body.dark-mode .status.picked_up {
+  background-color: #665500;
+  color: #ffe082;
+}
+
+body.dark-mode .status.in_transit {
+  background-color: #0d47a1;
+  color: #90caf9;
+}
+
+body.dark-mode .status.delivered {
+  background-color: #1b5e20;
+  color: #81c784;
+}
+
+body.dark-mode .status.completed {
+  background-color: #33691e;
+  color: #dcedc8;
+}
+/* General Action Buttons */
+.pack-btn,
+.cancel-btn,
+.receive-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  width:150px;
+  cursor: pointer;
+  margin-top: 8px;
+  margin-right: 6px;
+}
+
+/* Pack Button */
+.pack-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.pack-btn:hover {
+  background-color: #388e3c;
+}
+
+/* Cancel Button */
+.cancel-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #c62828;
+}
+
+/* Receive Button (already used in supplier orders) */
+.receive-btn {
+  background-color: #2196f3;
+  color: white;
+}
+
+.receive-btn:hover {
+  background-color: #1976d2;
+}
+body.dark-mode .pack-btn {
+  background-color: #66bb6a;
+  color: #fff;
+}
+
+body.dark-mode .cancel-btn {
+  background-color: #e57373;
+  color: #fff;
+}
+
+body.dark-mode .receive-btn {
+  background-color: #64b5f6;
+  color: #fff;
+}
+/* Order sort dropdown */
+.orders-section select {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  width: 180px;
+  background-color: #fff;
+  color: #000;
+}
+
+/* Dark mode styling */
+body.dark-mode .orders-section select {
+  background-color: #222;
+  color: #f4f4f4;
+  border: 1px solid #444;
+}
+.order-status-inline {
+  margin-top: 8px;
+  text-align: right;
+}
+.details-columns {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.product-info,
+.customer-info {
+  flex: 1;
+  min-width: 180px;
+}
+
+.product-info div,
+.customer-info div {
+  margin-bottom: 6px;
+}
+
+.details-columns {
+  display: flex;
+  gap: 10px; /* smaller gap between product and customer info */
+  margin-left: -30px; /* shift the whole section slightly left */
+}
+
+.order-details-section {
+  flex: 2;
+}
+
+.product-info,
+.customer-info {
+  flex: 1;
+  min-width: 160px;
+}
+.order-status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.order-status-section {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start; /* keep aligned to left */
+  gap: 10px;
+}
