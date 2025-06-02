@@ -27,13 +27,10 @@ mongoose.connection.on('connected', () => {
   console.log(`✅ Connected to MongoDB database`);
 });
 
-
 // 🛠 Middleware
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:5000", credentials: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ Serve reusable components
 app.use('/components', express.static(path.join(__dirname, 'components')));
 
 app.use(session({
@@ -52,8 +49,15 @@ app.use('/api/suppliers', require('./routes/suppliers'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/finance', require('./routes/finance'));
 app.use('/api/supplier-orders', require('./routes/supplierOrders'));
-app.use('/components', express.static(path.join(__dirname, 'components')));
 
+// ✅ API: Get current user role from session
+app.get('/api/session-role', (req, res) => {
+  if (req.session && req.session.user) {
+    res.json({ role: req.session.user.role });
+  } else {
+    res.status(401).json({ role: null });
+  }
+});
 
 // 📄 VIEWS ROUTES
 app.get('/login', (req, res) => {
@@ -96,7 +100,11 @@ app.get('/editAdmin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'editAdmin.html'));
 });
 
+// ✅ Role-protected Finance view
 app.get('/finance', (req, res) => {
+  if (req.session.user?.role === 'Staff') {
+    return res.status(403).send("Access denied");
+  }
   res.sendFile(path.join(__dirname, 'views', 'finance.html'));
 });
 
@@ -104,12 +112,12 @@ app.get('/orders', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'orders.html'));
 });
 
-// ✅ NEW: Supplier email button redirect page (auto-close window)
+// ✅ New: supplier email action page
 app.get('/trigger-action.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'trigger-action.html'));
 });
 
-// 📤 Image Upload
+// 📤 Image Upload Handler
 app.post('/uploadImage', upload.single('image'), (req, res) => {
   if (req.file) {
     res.json({ imageUrl: `/uploads/${req.file.filename}` });
@@ -121,17 +129,17 @@ app.post('/uploadImage', upload.single('image'), (req, res) => {
 // 🔒 Logout
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
-    if (err) return res.status(500).json({ message: "Error logging out" });
+    if (err) return res.status(500).json({ message: "Logout failed" });
     res.clearCookie('connect.sid');
     res.json({ message: "Logged out successfully" });
   });
 });
 
-// 🌐 Default redirect
+// 🌐 Default route
 app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-// 🚀 Server start
+// 🚀 Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🎶 Dashboard running on port ${PORT}. Ease on your FYP, Sofiya 🌹`));

@@ -2,13 +2,27 @@
   <h2>NL Dashboard</h2>
   <nav>
     <ul>
-      <li><a href="/admin-users">👤 Users</a></li>
+      <li id="usersLink"><a href="/admin-users">👤 Users</a></li>
       <li><a href="/inventory">📦 Inventory</a></li>
       <li><a href="/suppliers">🚚 Suppliers</a></li>
       <li><a href="/orders">🛒 Orders</a></li>
-      <li><a href="/finance">💰 Finance</a></li>
+      <li id="financeLink"><a href="/finance">💰 Finance</a></li>
     </ul>
   </nav>
   <button id="logoutButton" class="logout-button">Logout</button>
   <button id="darkModeToggle" class="logout-button">🌙 Dark Mode</button>
 </aside>
+
+<script>
+  fetch('/api/session-role')
+    .then(res => res.json())
+    .then(data => {
+      if (data.role === 'Staff') {
+        const financeItem = document.getElementById("financeLink");
+        const usersItem = document.getElementById("usersLink");
+        if (financeItem) financeItem.style.display = "none";
+        if (usersItem) usersItem.style.display = "none";
+      }
+    })
+    .catch(err => console.error("Role fetch error:", err));
+</script>

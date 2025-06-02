@@ -94,7 +94,7 @@
       <h2>NL Retails</h2>
       <form id="loginForm">
         <div>
-          <label for="identifier">Email</label>
+          <label for="identifier">Email or Phone</label>
           <input type="text" id="identifier" required />
         </div>
 
@@ -116,19 +116,29 @@
       const identifier = document.getElementById("identifier").value;
       const password = document.getElementById("password").value;
 
-      const response = await fetch("http://localhost:5000/auth/login", {
+      const response = await fetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password })
       });
 
       const data = await response.json();
+
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        window.location.href = "/admin-users";
+        sessionStorage.setItem("userRole", data.user.role); // used in sidebar
+
+        const role = data.user.role;
+        if (role === "Admin" || role === "Godmode") {
+          window.location.href = "/finance";
+        } else if (role === "Staff") {
+          window.location.href = "/orders";
+        } else {
+          window.location.href = "/inventory";
+        }
       } else {
-        document.getElementById("errorMessage").textContent = data.message;
+        document.getElementById("errorMessage").textContent = data.message || "Login failed";
       }
     });
   </script>

@@ -36,7 +36,28 @@
 </head>
 <body>
 <div class="wrapper">
-  <div id="sidebar"></div>
+<div id="sidebar"></div>
+
+<script>
+  fetch('/components/sidebar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("sidebar").innerHTML = html;
+
+      // After sidebar is inserted, hide role-restricted links
+      fetch('/api/session-role')
+        .then(res => res.json())
+        .then(data => {
+          if (data.role === 'Staff') {
+            const financeItem = document.querySelector("#financeLink");
+            const usersItem = document.querySelector("#usersLink");
+            if (financeItem) financeItem.style.display = "none";
+            if (usersItem) usersItem.style.display = "none";
+          }
+        })
+        .catch(err => console.error("Role fetch error:", err));
+    });
+</script>
 
   <div class="content-container">
     <div class="dashboard-header">
