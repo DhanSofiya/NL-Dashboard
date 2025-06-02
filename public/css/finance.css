@@ -1,0 +1,64 @@
+/* Button layout */
+.button-row {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.download-button {
+  display: inline-block;
+  padding: 12px 18px;
+  background-color: #f39c12;
+  color: white;
+  width: 100px;
+  font-weight: bold;
+  font-size: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.download-button:hover {
+  background-color: #d78b10;
+}
+
+/* Finance Grid Layout */
+.finance-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Card row holds two cards */
+.card-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+}
+
+/* Each finance card */
+.finance-card {
+  flex: 1;
+  background-color: #b3e5fc;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Optional class to span full width */
+.full-width {
+  width: 100%;
+}
+
+/* Responsive fallback for small screens */
+@media (max-width: 768px) {
+  .card-row {
+    flex-direction: column;
+  }
+
+  .download-button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}

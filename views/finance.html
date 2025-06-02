@@ -5,34 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Finance Dashboard | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css"/>
+  <link rel="stylesheet" href="/css/finance.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    .download-button {
-      display: inline-block;
-      padding: 12px 18px;
-      background-color: #f39c12;
-      color: white;
-      width: 100px;
-      font-weight: bold;
-      font-size: 14px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .download-button:hover {
-      background-color: #d78b10;
-    }
-
-    .button-row {
-      text-align: right;
-      margin-top: -10px;
-      margin-bottom: 20px;
-    }
-  </style>
+  <script src="/js/finance.js" defer></script>
 </head>
 <body>
 <div class="wrapper">
@@ -62,207 +39,65 @@
     <div class="dashboard-header">
       <h1 class="dashboard-title">Finance Dashboard</h1>
     </div>
+
     <div class="button-row">
       <button class="download-button" id="downloadPDF">📥 PDF</button>
     </div>
+
     <div class="finance-grid" id="financeGrid">
 
-      <!-- Combined Daily Revenue vs Expenses -->
-      <div class="finance-card" style="grid-column: span 2;">
+      <!-- Full-width overview -->
+      <div class="finance-card full-width">
         <h3>📊 Daily Overview</h3>
-        <canvas id="combinedChart"></canvas>
+        <canvas id="combinedChart" height="300"></canvas>
       </div>
 
-      <!-- Supplier Spending -->
-      <div class="finance-card">
-        <h3>🚚 Supplier Spending
-          <select id="supplierLimit">
-            <option value="5">Top 5</option>
-            <option value="10">Top 10</option>
-            <option value="All">All</option>
-          </select>
-        </h3>
-        <canvas id="supplierChart"></canvas>
+      <!-- Row 1: Supplier + Salary -->
+      <div class="card-row">
+        <div class="finance-card">
+          <h3>🚚 Supplier Spending<br><br>
+            <select id="supplierLimit">
+              <option value="5">Top 5</option>
+              <option value="10">Top 10</option>
+              <option value="All">All</option>
+            </select>
+          </h3>
+          <canvas id="supplierChart" height="250"></canvas>
+        </div>
+
+        <div class="finance-card">
+          <h3>💼 Daily Salary</h3>
+          <canvas id="salaryChart" height="250"></canvas>
+        </div>
       </div>
 
-      <!-- Top Sales + Product Expenses (side-by-side) -->
-      <div style="display: flex; gap: 20px;">
-        <div class="finance-card" style="flex: 1;">
-          <h3>🏆 Top Sales
+      <!-- Row 2: Sales + Product Expenses -->
+      <div class="card-row">
+        <div class="finance-card">
+          <h3>🏆 Top Sales<br><br>
             <select id="salesLimit">
               <option value="5">Top 5</option>
               <option value="10">Top 10</option>
               <option value="All">All</option>
             </select>
           </h3>
-          <canvas id="salesChart"></canvas>
+          <canvas id="salesChart" height="250"></canvas>
         </div>
 
-        <div class="finance-card" style="flex: 1;">
-          <h3>📦 Product Expenses
+        <div class="finance-card">
+          <h3>📦 Product Expenses<br><br>
             <select id="productLimit">
               <option value="5">Top 5</option>
               <option value="10">Top 10</option>
               <option value="All">All</option>
             </select>
           </h3>
-          <canvas id="productChart"></canvas>
+          <canvas id="productChart" height="250"></canvas>
         </div>
       </div>
 
-    </div> <!-- end of financeGrid -->
-  </div> <!-- end of content-container -->
-</div> <!-- end of wrapper -->
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  await fetch("/components/sidebar.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("sidebar").innerHTML = html;
-
-      document.getElementById("logoutButton").addEventListener("click", async () => {
-        await fetch("/auth/logout", { method: "POST" });
-        localStorage.clear();
-        location.href = "/login";
-      });
-
-      document.getElementById("darkModeToggle").addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
-        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
-      });
-
-      if (localStorage.getItem("darkMode") === "enabled") {
-        document.body.classList.add("dark-mode");
-      }
-    });
-
-  function limitData(data, limit) {
-    if (limit === 'All') return data;
-    return data.slice(0, parseInt(limit));
-  }
-
-  let supplierChart;
-  async function renderSupplierChart(limit = '5') {
-    const res = await fetch('/api/finance/expenses/suppliers');
-    const data = await res.json();
-    const limited = limitData(data.sort((a, b) => b.totalExpense - a.totalExpense), limit);
-
-    if (supplierChart) supplierChart.destroy();
-    supplierChart = new Chart(document.getElementById("supplierChart").getContext("2d"), {
-      type: 'bar',
-      data: {
-        labels: limited.map(d => d.supplier),
-        datasets: [{
-          label: "Total Spend (MYR)",
-          data: limited.map(d => d.totalExpense),
-          backgroundColor: '#f39c12'
-        }]
-      }
-    });
-  }
-
-  let productChart;
-  async function renderProductChart(limit = '5') {
-    const res = await fetch('/api/finance/expenses/products');
-    const data = await res.json();
-    const limited = limitData(data.sort((a, b) => b.totalExpense - a.totalExpense), limit);
-
-    if (productChart) productChart.destroy();
-    productChart = new Chart(document.getElementById("productChart").getContext("2d"), {
-      type: 'doughnut',
-      data: {
-        labels: limited.map(p => p.name),
-        datasets: [{
-          data: limited.map(p => p.totalExpense),
-          backgroundColor: ['#1abc9c','#9b59b6','#f1c40f','#e74c3c','#3498db','#e67e22','#2ecc71','#34495e','#c0392b','#7f8c8d']
-        }]
-      }
-    });
-  }
-
-  let salesChart;
-  async function renderSalesChart(limit = '5') {
-    const res = await fetch('/api/finance/revenue/products');
-    const data = await res.json();
-    const limited = limitData(data, limit);
-
-    if (salesChart) salesChart.destroy();
-    salesChart = new Chart(document.getElementById("salesChart").getContext("2d"), {
-      type: 'doughnut',
-      data: {
-        labels: limited.map(p => p.name),
-        datasets: [{
-          data: limited.map(p => p.quantity),
-          backgroundColor: ['#16a085','#27ae60','#2980b9','#8e44ad','#f39c12','#d35400','#c0392b','#2c3e50','#95a5a6','#7f8c8d']
-        }]
-      }
-    });
-  }
-
-  let combinedChart;
-  async function renderCombinedChart() {
-    const dailyRes = await fetch('/api/finance/expenses/daily');
-    const revenueRes = await fetch('/api/finance/revenue/daily');
-    const dailyData = await dailyRes.json();
-    const revenueData = await revenueRes.json();
-
-    const labels = dailyData.map(d => d.date);
-    const expenses = dailyData.map(d => d.total);
-    const revenues = revenueData.map(d => d.revenue);
-
-    if (combinedChart) combinedChart.destroy();
-    combinedChart = new Chart(document.getElementById("combinedChart").getContext("2d"), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "Total Revenue (MYR)",
-            data: revenues,
-            borderColor: '#27ae60',
-            fill: false
-          },
-          {
-            label: "Total Expenses (MYR)",
-            data: expenses,
-            borderColor: '#e74c3c',
-            fill: false
-          }
-        ]
-      }
-    });
-  }
-
-  async function renderRiderCommission() {
-    const revenueRes = await fetch('/api/finance/revenue/customers');
-    const revenueData = await revenueRes.json();
-    document.getElementById("riderOnlyCommission").textContent =
-      `Total Commission: RM ${revenueData.totalRiderCommission.toFixed(2)}`;
-  }
-
-  document.getElementById("salesLimit").addEventListener("change", e => renderSalesChart(e.target.value));
-  document.getElementById("productLimit").addEventListener("change", e => renderProductChart(e.target.value));
-  document.getElementById("supplierLimit").addEventListener("change", e => renderSupplierChart(e.target.value));
-
-  document.getElementById("downloadPDF").addEventListener("click", async () => {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    await html2canvas(document.getElementById("financeGrid")).then(canvas => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save("Finance_Dashboard.pdf");
-    });
-  });
-
-  // Initial renders
-  renderSalesChart('5');
-  renderProductChart('5');
-  renderSupplierChart('5');
-  renderCombinedChart();
-  renderRiderCommission();
-});
-</script>
+    </div> <!-- end financeGrid -->
+  </div> <!-- end content-container -->
+</div> <!-- end wrapper -->
 </body>
 </html>
