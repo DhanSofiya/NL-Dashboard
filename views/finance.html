@@ -8,6 +8,31 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .download-button {
+      display: inline-block;
+      padding: 12px 18px;
+      background-color: #f39c12;
+      color: white;
+      width: 100px;
+      font-weight: bold;
+      font-size: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .download-button:hover {
+      background-color: #d78b10;
+    }
+
+    .button-row {
+      text-align: right;
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
 <div class="wrapper">
@@ -16,6 +41,8 @@
   <div class="content-container">
     <div class="dashboard-header">
       <h1 class="dashboard-title">Finance Dashboard</h1>
+    </div>
+    <div class="button-row">
       <button class="download-button" id="downloadPDF">📥 PDF</button>
     </div>
 
@@ -52,7 +79,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  // Sidebar and dark mode
   await fetch("/components/sidebar.html")
     .then(res => res.text())
     .then(html => {
@@ -74,13 +100,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-  // Helper: Slice data by dropdown
   function limitData(data, limit) {
     if (limit === 'All') return data;
     return data.slice(0, parseInt(limit));
   }
 
-  // Supplier Spending Chart
   let supplierChart;
   async function renderSupplierChart(limit = '5') {
     const res = await fetch('/api/finance/expenses/suppliers');
@@ -105,7 +129,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSupplierChart(e.target.value);
   });
 
-  // Product Expense Chart
   let productChart;
   async function renderProductChart(limit = '5') {
     const res = await fetch('/api/finance/expenses/products');
@@ -129,7 +152,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderProductChart(e.target.value);
   });
 
-  // Daily Expenses Chart
   const dailyRes = await fetch('/api/finance/expenses/daily');
   const dailyData = await dailyRes.json();
   new Chart(document.getElementById("dailyChart").getContext("2d"), {
@@ -145,7 +167,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // PDF Download
   document.getElementById("downloadPDF").addEventListener("click", async () => {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
@@ -159,7 +180,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Initial charts
   renderSupplierChart('5');
   renderProductChart('5');
 });

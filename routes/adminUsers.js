@@ -3,11 +3,25 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const User = require('../models/User');
+const DeliveryPartner = require('../models/DeliveryPartner'); // 🟢 secondary DB model
 
-// GET all Admin/Staff users only
+// ✅ GET Admin, Staff (main DB) + Rider (from secondary DB)
 router.get('/admin-users', async (req, res) => {
     try {
-        const users = await User.find({ role: { $in: ['Admin', 'Staff'] } }, { password: 0 });
+        const [adminStaffUsers, deliveryPartners] = await Promise.all([
+            User.find({ role: { $in: ['Admin', 'Staff'] } }, { password: 0 }),
+            DeliveryPartner.find({}, { password: 0 }) // All delivery partners
+        ]);
+
+        // Convert delivery partners into Rider-format users
+        const riders = deliveryPartners.map(dp => ({
+            _id: dp._id,
+            name: dp.name,
+            email: dp.email,
+            role: 'Rider'
+        }));
+
+        const users = [...adminStaffUsers, ...riders];
         res.json(users);
     } catch (error) {
         console.error("Error fetching admin users:", error);
@@ -15,7 +29,7 @@ router.get('/admin-users', async (req, res) => {
     }
 });
 
-// POST new Admin/Staff user
+// ✅ POST new Admin/Staff user (main DB only)
 router.post('/admin-users', async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
@@ -40,7 +54,7 @@ router.post('/admin-users', async (req, res) => {
     }
 });
 
-// PUT update existing Admin/Staff user
+// ✅ PUT update Admin/Staff user (main DB only)
 router.put('/admin-users/:id', async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
@@ -63,7 +77,7 @@ router.put('/admin-users/:id', async (req, res) => {
     }
 });
 
-// DELETE admin user
+// ✅ DELETE Admin/Staff user (main DB only)
 router.delete('/admin-users/:id', async (req, res) => {
     try {
         await User.findByIdAndDelete(req.params.id);
