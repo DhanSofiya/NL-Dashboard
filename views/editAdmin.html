@@ -5,42 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Edit Admin User | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .submit-btn {
+      background-color: #4caf50;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
   <div class="wrapper">
-    <!-- Sidebar placeholder -->
     <div id="sidebar"></div>
 
     <div class="content-container">
       <h1>Edit Admin User</h1>
-      <form id="editUserForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" required>
+      <div class="form-container">
+        <form id="editUserForm">
+          <label for="name">Name:</label>
+          <input type="text" id="name" required>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" required>
+          <label for="email">Email:</label>
+          <input type="email" id="email" required>
 
-        <label for="password">New Password:</label>
-        <input type="password" id="password">
+          <label for="password">New Password:</label>
+          <input type="password" id="password">
 
-        <label for="role">Role:</label>
-        <select id="role">
-          <option value="Admin">Admin</option>
-          <option value="Staff">Staff</option>
-        </select>
+          <label for="role">Role:</label>
+          <select id="role">
+            <option value="Admin">Admin</option>
+            <option value="Staff">Staff</option>
+          </select>
 
-        <button type="submit">Update Admin User</button>
-      </form>
+          <button type="submit" class="submit-btn">Update Admin User</button>
+        </form>
+      </div>
     </div>
   </div>
 
   <script>
-    // Load sidebar and restore dark mode
     document.addEventListener("DOMContentLoaded", async () => {
       const sidebarHTML = await fetch("/components/sidebar.html").then(res => res.text());
       document.getElementById("sidebar").innerHTML = sidebarHTML;
 
-      // Dark mode
       if (localStorage.getItem("darkMode") === "enabled") {
         document.body.classList.add("dark-mode");
       }
@@ -50,7 +72,6 @@
         localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
       });
 
-      // Get data from URL
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const name = params.get("name");
@@ -63,12 +84,10 @@
         return;
       }
 
-      // Pre-fill the form
       document.getElementById("name").value = name;
       document.getElementById("email").value = email;
       document.getElementById("role").value = role;
 
-      // Submit logic
       document.getElementById("editUserForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 

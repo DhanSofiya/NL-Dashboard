@@ -9,8 +9,6 @@
   <style>
     .stat-card.active {
       border: 2px solid #000;
-      box-shadow: 0 0 0 3px #999 inset;
-      transform: scale(1.02);
     }
     .pagination-controls {
       display: flex;
@@ -54,6 +52,25 @@
     body.dark-mode .pagination-controls span {
       color: #ddd;
     }
+    
+    .order-info-btn {
+    background-color: #28d219;
+    color: #000000;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    }
+
+.edit-info-btn {
+  background-color: #e4ff6c;
+  color: #000000;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -191,18 +208,24 @@
       card.classList.add("supplier-card");
       if (stockClass) card.classList.add(stockClass);
 
-      card.innerHTML = `
-        <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
-        <h3>${product.name}</h3>
-        <p><strong>Category:</strong> ${categoryText}</p>
-        <p><strong>Supplier:</strong> ${supplierText}</p>
-        <p><strong>Price:</strong> RM ${price}</p>
-        <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
-        <p>${stockEmoji} <strong>Stock:</strong> ${stock}</p>
-        <div class="action-buttons">
-          <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
-          <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
-        </div>
+card.innerHTML = `
+  <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
+  <h3>${product.name}</h3>
+  <p><strong>Category:</strong> ${categoryText}</p>
+  <p><strong>Supplier:</strong> ${supplierText}</p>
+  <p><strong>Price:</strong> RM ${price}</p>
+  <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
+  <p>${stockEmoji} <strong>Stock:</strong> ${stock}</p>
+  <div class="action-buttons">
+    <button style="background-color: #28d219; color: #000000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;"
+      onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">
+      Order Stock
+    </button>
+    <button style="background-color: #e4ff6c; color: #000000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;"
+      onclick="editProductInfo('${product._id}')">
+      Edit Info
+    </button>
+  </div>
       `;
       inventoryGrid.appendChild(card);
     });

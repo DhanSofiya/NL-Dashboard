@@ -1434,3 +1434,21 @@ body.dark-mode .supplier-card.low-stock {
   background-color: #ad7739;
   opacity: 0.95;
 }
+
+.order-stock-btn {
+  background-color: #28d219;
+  color: #000000;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-stock-btn {
+      background-color: #e4ff6c;
+      color: #000000;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }

@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Add Admin User | NL-Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css"/>
+  <style>
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .submit-btn {
+      background-color: #4caf50;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
   <div class="wrapper">
@@ -12,25 +35,26 @@
 
     <div class="content-container">
       <h1>Add New Admin User</h1>
+      <div class="form-container">
+        <form id="addUserForm">
+          <label for="name">Name:</label>
+          <input type="text" id="name" required>
 
-      <form id="addUserForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" required>
+          <label for="email">Email:</label>
+          <input type="email" id="email" required>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" required>
+          <label for="password">Password:</label>
+          <input type="password" id="password" required>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" required>
+          <label for="role">Role:</label>
+          <select id="role">
+            <option value="Admin">Admin</option>
+            <option value="Staff">Staff</option>
+          </select>
 
-        <label for="role">Role:</label>
-        <select id="role">
-          <option value="Admin">Admin</option>
-          <option value="Staff">Staff</option>
-        </select>
-
-        <button type="submit">Add Admin User</button>
-      </form>
+          <button type="submit" class="submit-btn">Add Admin User</button>
+        </form>
+      </div>
     </div>
   </div>
 
