@@ -1664,3 +1664,21 @@ body.dark-mode .orders-section select {
   align-items: flex-start; /* keep aligned to left */
   gap: 10px;
 }
+#orderSidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 100%;
+  background-color: #1a1a1a;
+  color: white;
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.3);
+}
+
+#orderSidebar.sidebar-open {
+  transform: translateX(0);
+}

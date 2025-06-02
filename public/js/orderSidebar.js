@@ -4,7 +4,12 @@
 let supplierOrders = {}; // { supplierId: { name, email, products: [{ id, name, quantity }], notes: "", deliveryDate: "" } }
 const MAX_SUPPLIERS = 3;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Load the order sidebar component
+  const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
+  document.getElementById("sidebarComponent").innerHTML = sidebar;
+
+  // ✅ Attach close button event AFTER sidebar is loaded
   const closeBtn = document.getElementById("closeSidebarBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
