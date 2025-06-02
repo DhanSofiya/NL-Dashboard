@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const SupplierOrder = require('../models/SupplierOrder');
 const Product = require('../models/Product');
+const Order = require('../models/Order'); // Customer orders
 
 // ✅ GET: Total expenses by supplier
 router.get('/expenses/suppliers', async (req, res) => {
@@ -92,6 +93,90 @@ router.get('/expenses/daily', async (req, res) => {
   } catch (err) {
     console.error("❌ Daily expense error:", err);
     res.status(500).json({ message: "Error fetching daily expenses" });
+  }
+});
+
+// ✅ GET: Customer revenue and platform profit
+router.get('/revenue/customers', async (req, res) => {
+  try {
+    const orders = await Order.find({ status: 'completed' });
+
+    let totalRevenue = 0;
+    let totalPlatformProfit = 0;
+    let totalRiderCommission = 0;
+
+    for (const order of orders) {
+      totalRevenue += order.totalPrice;
+      totalPlatformProfit += order.platformProfit;
+      totalRiderCommission += order.riderCommission;
+    }
+
+    res.json({
+      totalRevenue,
+      totalPlatformProfit,
+      totalRiderCommission
+    });
+  } catch (err) {
+    console.error("❌ Revenue fetch error:", err);
+    res.status(500).json({ message: "Error fetching customer revenue" });
+  }
+});
+
+// ✅ GET: Top sold products by quantity
+router.get('/revenue/products', async (req, res) => {
+  try {
+    const orders = await Order.find({ status: 'completed' }).populate('items.product', 'name');
+
+    const productSales = {};
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        const product = item.product;
+        if (!product) continue;
+
+        if (!productSales[product._id]) {
+          productSales[product._id] = {
+            name: product.name,
+            quantity: 0
+          };
+        }
+
+        productSales[product._id].quantity += item.quantity;
+      }
+    }
+
+    const result = Object.values(productSales).sort((a, b) => b.quantity - a.quantity);
+    res.json(result);
+  } catch (err) {
+    console.error("❌ Product revenue error:", err);
+    res.status(500).json({ message: "Error fetching product revenue" });
+  }
+});
+
+// ✅ GET: Daily revenue and rider commission
+router.get('/revenue/daily', async (req, res) => {
+  try {
+    const orders = await Order.find({ status: 'completed' });
+
+    const dailyStats = {};
+
+    for (const order of orders) {
+      const dateKey = new Date(order.updatedAt).toISOString().slice(0, 10);
+      if (!dailyStats[dateKey]) {
+        dailyStats[dateKey] = { revenue: 0, riderCommission: 0 };
+      }
+      dailyStats[dateKey].revenue += order.totalPrice;
+      dailyStats[dateKey].riderCommission += order.riderCommission;
+    }
+
+    const result = Object.entries(dailyStats)
+      .map(([date, { revenue, riderCommission }]) => ({ date, revenue, riderCommission }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json(result);
+  } catch (err) {
+    console.error("❌ Daily revenue error:", err);
+    res.status(500).json({ message: "Error fetching daily revenue" });
   }
 });
 
