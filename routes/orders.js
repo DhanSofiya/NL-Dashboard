@@ -1,73 +1,140 @@
 // routes/orders.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
+const Order = require("../models/Order");
+const Product = require("../models/Product");
+const connectSecondaryDB = require("../config/secondaryDb");
+const mongoose = require("mongoose");
 
-// ✅ ORDER MODEL
-const orderSchema = new mongoose.Schema({
-  user: String,
-  deliveryDate: Date,
-  address: String,
-  items: [
-    {
-      product: mongoose.Types.ObjectId,
-      quantity: Number
-    }
-  ],
-  status: String
-}, { timestamps: true });
+// Connect to secondary DB to access delivery partners
+const secondaryConnection = connectSecondaryDB();
+const DeliveryPartner = secondaryConnection.model("DeliveryPartner", new mongoose.Schema({
+  name: String,
+  email: String
+}, { collection: "deliverypartners" }));
 
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema, 'orders');
+const COMMISSION_RATE = 0.10;
 
-// ✅ CUSTOMER MODEL
-const customerSchema = new mongoose.Schema({
-  phone: String
-}, { strict: false });
+// Utility to get random rider name
+async function getRandomRiderName() {
+  const count = await DeliveryPartner.countDocuments();
+  if (count === 0) return "Rider";
+  const randomIndex = Math.floor(Math.random() * count);
+  const rider = await DeliveryPartner.findOne().skip(randomIndex);
+  return rider?.name || "Rider";
+}
 
-const Customer = mongoose.models.Customer || mongoose.model('Customer', customerSchema, 'users');
-
-// ✅ PRODUCT MODEL
-const productSchema = new mongoose.Schema({
-  name: String
-}, { strict: false });
-
-const Product = mongoose.models.Product || mongoose.model('Product', productSchema, 'products');
-
-// ✅ GET /api/orders – Manual join
-router.get('/', async (req, res) => {
+// ✅ GET all customer orders
+router.get("/", async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find().sort({ createdAt: -1 }).populate("items.product");
 
-    // Extract unique customer and product IDs
-    const customerIds = orders.map(o => o.user).filter(Boolean);
-    const productIds = orders.flatMap(o => o.items.map(i => i.product)).filter(Boolean);
-
-    // Query customers and products
-    const customers = await Customer.find({ _id: { $in: customerIds } });
-    const products = await Product.find({ _id: { $in: productIds } });
-
-    // Create lookup maps
-    const customerMap = {};
-    customers.forEach(c => { customerMap[c._id.toString()] = c.phone; });
-
-    const productMap = {};
-    products.forEach(p => { productMap[p._id.toString()] = p.name; });
-
-    // Build enriched orders safely
-    const enrichedOrders = orders.map(o => ({
-      ...o.toObject(),
-      customerPhone: customerMap[o.user] || 'N/A',
-      items: o.items.map(i => ({
-        name: productMap[i.product?.toString?.()] ||
-              (i.product ? `Product ID: ${i.product}` : 'Unknown Product'),
-        quantity: i.quantity
-      }))
-    }));
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const riderName = await getRandomRiderName();
+        return {
+          ...order.toObject(),
+          riderName
+        };
+      })
+    );
 
     res.json(enrichedOrders);
   } catch (err) {
     console.error("❌ Error fetching orders:", err);
-    res.status(500).json({ message: 'Error fetching orders' });
+    res.status(500).json({ message: "Failed to fetch orders", error: err });
+  }
+});
+
+// ✅ POST create a new customer order
+router.post("/", async (req, res) => {
+  try {
+    const {
+      orderId,
+      customerName,
+      customerPhone,
+      deliveryLocation,
+      totalPrice,
+      items
+    } = req.body;
+
+    const riderCommission = +(totalPrice * COMMISSION_RATE).toFixed(2);
+    const platformProfit = +(totalPrice - riderCommission).toFixed(2);
+
+    const newOrder = new Order({
+      orderId,
+      customerName,
+      customerPhone,
+      deliveryLocation,
+      totalPrice,
+      riderCommission,
+      platformProfit,
+      items
+    });
+
+    await newOrder.save();
+    res.status(201).json({ message: "Order created", order: newOrder });
+  } catch (err) {
+    console.error("❌ Error creating order:", err);
+    res.status(500).json({ message: "Failed to create order", error: err });
+  }
+});
+
+// ✅ PUT update order status (with inventory deduction on "packed")
+router.put("/:id/status", async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const validStatuses = [
+      "pending", "packed", "cancelled", "picked_up",
+      "in_transit", "delivered", "completed"
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const order = await Order.findById(req.params.id).populate("items.product");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Handle inventory deduction if status is "packed"
+    if (status === "packed" && order.status === "pending") {
+      for (const item of order.items) {
+        const product = await Product.findById(item.product._id);
+        if (!product) {
+          return res.status(400).json({ message: `Product not found for item ${item.product._id}` });
+        }
+
+        if (product.stock < item.quantity) {
+          return res.status(400).json({ message: `Insufficient stock for "${product.name}"` });
+        }
+
+        product.stock -= item.quantity;
+        await product.save();
+      }
+    }
+
+    order.status = status;
+    order.updatedAt = new Date();
+    await order.save();
+
+    res.json({ message: "Order status updated", order });
+  } catch (err) {
+    console.error("❌ Error updating order status:", err);
+    res.status(500).json({ message: "Failed to update order status", error: err });
+  }
+});
+
+// ✅ GET order by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate("items.product");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    const riderName = await getRandomRiderName();
+    res.json({ ...order.toObject(), riderName });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch order", error: err });
   }
 });
 

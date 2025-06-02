@@ -1,54 +1,71 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+// models/Order.js
+const mongoose = require("mongoose");
 
-const orderSchema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: false
+const OrderSchema = new mongoose.Schema({
+  orderId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  customerName: {
+    type: String,
+    required: true
+  },
+  customerPhone: {
+    type: String,
+    required: true
+  },
+  deliveryLocation: {
+    address: { type: String, required: true },
+    latitude: { type: Number },
+    longitude: { type: Number }
+  },
+  totalPrice: {
+    type: Number,
+    required: true
+  },
+  riderCommission: {
+    type: Number,
+    required: true
+  },
+  platformProfit: {
+    type: Number,
+    required: true
   },
   items: [
     {
       product: {
-        type: Schema.Types.ObjectId,
-        ref: 'Product',
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
         required: true
       },
       quantity: {
-        type: Number,
-        required: true,
-        min: 1
-      },
-      price: {
         type: Number,
         required: true
       }
     }
   ],
-  total: {
-    type: Number,
-    required: true
-  },
   status: {
     type: String,
-    enum: ['Pending', 'In Progress', 'Completed', 'Cancelled'],
-    default: 'Pending'
-  },
-  deliveryDate: {
-    type: Date
-  },
-  address: {
-    type: String
-  },
-  type: {
-    type: String,
-    enum: ['normalOrder', 'supplierOrder'],
-    default: 'normalOrder'
+    enum: [
+      "pending",     // customer places order
+      "packed",      // shop prepares order
+      "cancelled",   // shop cancels order
+      "picked_up",   // rider collects the item
+      "in_transit",  // rider is on the way
+      "delivered",   // customer receives the item
+      "completed"    // optional final stage
+    ],
+    default: "pending"
   },
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", OrderSchema);

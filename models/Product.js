@@ -18,7 +18,7 @@ const ProductSchema = new mongoose.Schema({
     ref: 'Supplier',
     required: true
   },
-  stock: { type: Number, default: 0 } // ✅ Corrected to match POST logic
+  stock: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.models.Product || mongoose.model('Product', ProductSchema);

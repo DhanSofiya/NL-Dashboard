@@ -1,14 +1,12 @@
-
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Inventory Management | NL-Dashboard</title>
-<link href="/css/styles.css" rel="stylesheet"/>
-<script defer="" src="/js/orderSidebar.js"></script>
-<style>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Inventory Management | NL-Dashboard</title>
+  <link href="/css/styles.css" rel="stylesheet"/>
+  <script defer src="/js/orderSidebar.js"></script>
+  <style>
     .stat-card.active {
       border: 2px solid #000;
       box-shadow: 0 0 0 3px #999 inset;
@@ -60,275 +58,276 @@
 </head>
 <body>
 <div class="wrapper">
-<div id="sidebar"></div>
-<div class="content-container">
-<h1>Inventory Management</h1>
-<div class="inventory-stats">
-<div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
-<div class="stat-card" id="totalProducts">Total: 0</div>
-<div class="stat-card" id="outOfStock">Out of Stock: 0</div>
-<div class="stat-card" id="lowStock">Low Stock: 0</div>
-<div class="stat-card" id="totalCategories">Category: 0</div>
-<div class="stat-card" id="totalSuppliers">Supplier: 0</div>
-</div>
-<div class="inventory-controls">
-<div class="controls-wrapper"><div class="control-group"><span class="active-filter-label" id="activeFilterLabel">Showing: All Products</span></div>
-<div class="control-group">
-<input id="searchInput" placeholder="Search products..." type="search"/>
-</div>
-<div class="control-group">
-<select id="sortSelect">
-<option value="">Sort By</option>
-<option value="name-asc">Name A–Z</option>
-<option value="name-desc">Name Z–A</option>
-<option value="price-asc">Price Low–High</option>
-<option value="price-desc">Price High–Low</option>
-<option value="stock-asc">Stock Low–High</option>
-<option value="stock-desc">Stock High–Low</option>
-</select>
-</div>
-</div>
-</div>
-<section class="inventory-list">
-<div class="inventory-grid" id="inventoryGrid"></div>
-<div class="pagination-controls">
-<button id="prevPageBtn">◀️</button>
-<span id="pageIndicator">Page 1 of 1</span>
-<button id="nextPageBtn">▶️</button>
-</div>
-</section>
-</div>
+  <div id="sidebar"></div>
+  <div class="content-container">
+    <h1 class="dashboard-title">Inventory Management</h1> <br>
+    <div class="inventory-stats">
+      <div class="stat-card add-product" onclick="window.location.href='/addProduct'">➕ New</div>
+      <div class="stat-card" id="totalProducts">Total: 0</div>
+      <div class="stat-card" id="outOfStock">Out of Stock: 0</div>
+      <div class="stat-card" id="lowStock">Low Stock: 0</div>
+      <div class="stat-card" id="totalCategories">Category: 0</div>
+      <div class="stat-card" id="totalSuppliers">Supplier: 0</div>
+    </div>
+    <div class="inventory-controls">
+      <div class="controls-wrapper">
+        <div class="control-group">
+          <span class="active-filter-label" id="activeFilterLabel">Showing: All Products</span>
+        </div>
+        <div class="control-group">
+          <input id="searchInput" placeholder="Search products..." type="search"/>
+        </div>
+        <div class="control-group">
+          <select id="sortSelect">
+            <option value="">Sort By</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="stock-asc">Stock Low–High</option>
+            <option value="stock-desc">Stock High–Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <section class="inventory-list">
+      <div class="inventory-grid" id="inventoryGrid"></div>
+      <div class="pagination-controls">
+        <button id="prevPageBtn">◀️</button>
+        <span id="pageIndicator">Page 1 of 1</span>
+        <button id="nextPageBtn">▶️</button>
+      </div>
+    </section>
+  </div>
 </div>
 <div id="sidebarComponent"></div>
-<script>function updateActiveFilterLabel(label, omitPrefix = false) {
-  const field = document.getElementById("activeFilterLabel");
-  if (field) field.textContent = omitPrefix ? label : `Showing: ${label}`;
-}
+<script>
+  function updateActiveFilterLabel(label, omitPrefix = false) {
+    const field = document.getElementById("activeFilterLabel");
+    if (field) field.textContent = omitPrefix ? label : `Showing: ${label}`;
+  }
 
+  let allProducts = [];
+  let categoryIndex = 0;
+  let supplierIndex = 0;
+  let currentPage = 1;
+  const ITEMS_PER_PAGE = 9;
 
-    let allProducts = [];
-    let categoryIndex = 0;
-    let supplierIndex = 0;
-    let currentPage = 1;
-    const ITEMS_PER_PAGE = 9;
+  function updatePageIndicator(totalItems) {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+    document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
+  }
 
-    async function loadSidebarComponent() {
-      const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
-      document.getElementById("sidebarComponent").innerHTML = sidebar;
-      const closeBtn = document.getElementById("closeSidebarBtn");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-          document.getElementById("orderSidebar").classList.remove("sidebar-open");
-        });
+  function renderProducts(products) {
+    const inventoryGrid = document.getElementById("inventoryGrid");
+    inventoryGrid.innerHTML = "";
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const pageData = products.slice(startIndex, endIndex);
+
+    pageData.forEach(product => {
+      const categoryText = product.category?.name || "Unknown";
+      const supplierText = product.supplier?.name || "Unknown";
+      const supplierId = product.supplier?._id || "";
+      const imagePath = product.image_uri || "/images/placeholder.jpg";
+      const price = product.price?.toFixed(2) ?? "0.00";
+      const supplierPrice = product.supplier_price?.toFixed(2) ?? "0.00";
+      const stock = product.stock ?? 0;
+
+      let stockEmoji = "";
+      let stockClass = "";
+
+      if (stock === 0) {
+        stockEmoji = "❌";
+        stockClass = "no-stock";
+      } else if (stock < 5) {
+        stockEmoji = "⚠️";
+        stockClass = "low-stock";
       }
+
+      const card = document.createElement("div");
+      card.classList.add("supplier-card");
+      if (stockClass) card.classList.add(stockClass);
+
+      card.innerHTML = `
+        <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
+        <h3>${product.name}</h3>
+        <p><strong>Category:</strong> ${categoryText}</p>
+        <p><strong>Supplier:</strong> ${supplierText}</p>
+        <p><strong>Price:</strong> RM ${price}</p>
+        <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
+        <p>${stockEmoji} <strong>Stock:</strong> ${stock}</p>
+        <div class="action-buttons">
+          <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
+          <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
+        </div>
+      `;
+      inventoryGrid.appendChild(card);
+    });
+  }
+
+  function filterAndRender() {
+    const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+    const sortOption = document.getElementById("sortSelect").value;
+
+    let filtered = allProducts.filter(p =>
+      p.name.toLowerCase().includes(searchTerm) ||
+      p.category?.name?.toLowerCase().includes(searchTerm) ||
+      p.supplier?.name?.toLowerCase().includes(searchTerm)
+    );
+
+    switch (sortOption) {
+      case "name-asc": filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case "name-desc": filtered.sort((a, b) => b.name.localeCompare(a.name)); break;
+      case "price-asc": filtered.sort((a, b) => a.price - b.price); break;
+      case "price-desc": filtered.sort((a, b) => b.price - a.price); break;
+      case "stock-asc": filtered.sort((a, b) => a.stock - b.stock); break;
+      case "stock-desc": filtered.sort((a, b) => b.stock - a.stock); break;
     }
 
-    function updateStats(products) {
-      const total = products.length;
-      const outOfStock = products.filter(p => p.stock === 0).length;
-      const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
-      const categories = new Set(products.map(p => p.category?.name).filter(Boolean));
-      const suppliers = new Set(products.map(p => p.supplier?.name).filter(Boolean));
+    updateStats(filtered);
+    renderProducts(filtered);
+    updatePageIndicator(filtered.length);
+  }
 
-      document.getElementById("totalProducts").innerText = `📦 Total: ${total}`;
-      document.getElementById("outOfStock").innerText = `❌ Out of Stock: ${outOfStock}`;
-      document.getElementById("lowStock").innerText = `⚠️ Low Stock: ${lowStock}`;
-      document.getElementById("totalCategories").innerText = `🗂️ Category: ${categories.size}`;
-      document.getElementById("totalSuppliers").innerText = `🏢 Supplier: ${suppliers.size}`;
-    }
+  function updateStats(products) {
+    const total = products.length;
+    const outOfStock = products.filter(p => p.stock === 0).length;
+    const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
+    const categories = new Set(products.map(p => p.category?.name).filter(Boolean));
+    const suppliers = new Set(products.map(p => p.supplier?.name).filter(Boolean));
 
-function renderProducts(products) {
-  const inventoryGrid = document.getElementById("inventoryGrid");
-  inventoryGrid.innerHTML = "";
+    document.getElementById("totalProducts").innerText = `📦 Total: ${total}`;
+    document.getElementById("outOfStock").innerText = `❌ Out of Stock: ${outOfStock}`;
+    document.getElementById("lowStock").innerText = `⚠️ Low Stock: ${lowStock}`;
+    document.getElementById("totalCategories").innerText = `🗂️ Category: ${categories.size}`;
+    document.getElementById("totalSuppliers").innerText = `🏢 Supplier: ${suppliers.size}`;
+  }
 
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const pageData = products.slice(startIndex, endIndex);
+  function setActiveStatCard(cardId) {
+    document.querySelectorAll('.inventory-stats .stat-card').forEach(card => card.classList.remove('active'));
+    const active = document.getElementById(cardId);
+    if (active) active.classList.add('active');
+  }
 
-  pageData.forEach(product => {
-    const categoryText = product.category?.name || "Unknown";
-    const supplierText = product.supplier?.name || "Unknown";
-    const supplierId = product.supplier?._id || "";
-    const imagePath = product.image_uri || "/images/placeholder.jpg";
-    const price = product.price?.toFixed(2) ?? "0.00";
-    const supplierPrice = product.supplier_price?.toFixed(2) ?? "0.00";
-    const stock = product.stock ?? 0;
+  window.editProductInfo = id => window.location.href = `/editProduct.html?id=${id}`;
 
-    let stockEmoji = "";
-    let stockClass = "";
+  document.addEventListener("DOMContentLoaded", async () => {
+    const sidebar = await fetch("/components/order-sidebar.html").then(res => res.text());
+    document.getElementById("sidebarComponent").innerHTML = sidebar;
 
-    if (stock === 0) {
-      stockEmoji = "❌";
-      stockClass = "no-stock";
-    } else if (stock < 5) {
-      stockEmoji = "⚠️";
-      stockClass = "low-stock";
-    }
+    await fetch("/components/sidebar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("sidebar").innerHTML = html;
+        document.getElementById("logoutButton").addEventListener("click", async () => {
+          await fetch("http://localhost:5000/auth/logout", { method: "POST" });
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        });
 
-    const card = document.createElement("div");
-    card.classList.add("supplier-card");
-    if (stockClass) card.classList.add(stockClass);
+        document.getElementById("darkModeToggle").addEventListener("click", () => {
+          document.body.classList.toggle("dark-mode");
+          localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+        });
 
-    card.innerHTML = `
-      <img src="${imagePath}" alt="${product.name}" onerror="this.onerror=null;this.src='/images/placeholder.jpg';">
-      <h3>${product.name}</h3>
-      <p><strong>Category:</strong> ${categoryText}</p>
-      <p><strong>Supplier:</strong> ${supplierText}</p>
-      <p><strong>Price:</strong> RM ${price}</p>
-      <p><strong>Supplier Price:</strong> RM ${supplierPrice}</p>
-      <p> ${stockEmoji} <strong>Stock:</strong> ${stock}</p>
-      <div class="action-buttons">
-        <button class="order-stock-btn" onclick="orderStock('${supplierId}', '${product._id}', '${product.name}')">Order Stock</button>
-        <button class="edit-info-btn" onclick="editProductInfo('${product._id}')">Edit Info</button>
-      </div>
-    `;
-    inventoryGrid.appendChild(card);
-  });
-}
+        if (localStorage.getItem("darkMode") === "enabled") {
+          document.body.classList.add("dark-mode");
+        }
+      });
 
+    const response = await fetch("http://localhost:5000/api/inventory");
+    allProducts = await response.json();
 
-    function filterAndRender() {
+    updateStats(allProducts);
+    renderProducts(allProducts);
+    updatePageIndicator(allProducts.length);
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      currentPage = 1;
+      filterAndRender();
+    });
+
+    document.getElementById("sortSelect").addEventListener("change", () => {
+      currentPage = 1;
+      filterAndRender();
+    });
+
+    document.getElementById("prevPageBtn").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        filterAndRender();
+      }
+    });
+
+    document.getElementById("nextPageBtn").addEventListener("click", () => {
       const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-      const sortOption = document.getElementById("sortSelect").value;
-
-      let filtered = allProducts.filter(p =>
+      const filtered = allProducts.filter(p =>
         p.name.toLowerCase().includes(searchTerm) ||
         p.category?.name?.toLowerCase().includes(searchTerm) ||
         p.supplier?.name?.toLowerCase().includes(searchTerm)
       );
-
-      switch (sortOption) {
-        case "name-asc": filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
-        case "name-desc": filtered.sort((a, b) => b.name.localeCompare(a.name)); break;
-        case "price-asc": filtered.sort((a, b) => a.price - b.price); break;
-        case "price-desc": filtered.sort((a, b) => b.price - a.price); break;
-        case "stock-asc": filtered.sort((a, b) => a.stock - b.stock); break;
-        case "stock-desc": filtered.sort((a, b) => b.stock - a.stock); break;
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        filterAndRender();
       }
-
-      updateStats(filtered);
-      renderProducts(filtered);
-    }
-
-    function setActiveStatCard(cardId) {
-      document.querySelectorAll('.inventory-stats .stat-card').forEach(card => {
-        card.classList.remove('active');
-      });
-      const active = document.getElementById(cardId);
-      if (active) active.classList.add('active');
-    }
-
-    window.editProductInfo = (id) => {
-      window.location.href = `/editProduct.html?id=${id}`;
-    };
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      await loadSidebarComponent();
-
-      await fetch("/components/sidebar.html")
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("sidebar").innerHTML = html;
-          document.getElementById("logoutButton").addEventListener("click", async () => {
-            await fetch("http://localhost:5000/auth/logout", { method: "POST" });
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            window.location.href = "/login";
-          });
-
-          document.getElementById("darkModeToggle").addEventListener("click", () => {
-            document.body.classList.toggle("dark-mode");
-            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
-          });
-
-          if (localStorage.getItem("darkMode") === "enabled") {
-            document.body.classList.add("dark-mode");
-          }
-        });
-
-      const response = await fetch("http://localhost:5000/api/inventory");
-      allProducts = await response.json();
-
-      updateStats(allProducts);
-      renderProducts(allProducts);
-
-      document.getElementById("searchInput").addEventListener("input", () => {
-        currentPage = 1;
-        filterAndRender();
-      });
-
-      document.getElementById("sortSelect").addEventListener("change", () => {
-        currentPage = 1;
-        filterAndRender();
-      });
-
-      document.getElementById("prevPageBtn").addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          filterAndRender();
-        }
-      });
-
-      document.getElementById("nextPageBtn").addEventListener("click", () => {
-        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-        const filtered = allProducts.filter(p =>
-          p.name.toLowerCase().includes(searchTerm) ||
-          p.category?.name?.toLowerCase().includes(searchTerm) ||
-          p.supplier?.name?.toLowerCase().includes(searchTerm)
-        );
-        const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-        if (currentPage < totalPages) {
-          currentPage++;
-          filterAndRender();
-        }
-      });
-
-      document.getElementById("totalProducts").addEventListener("click", () => {
-        renderProducts(allProducts);
-        setActiveStatCard("totalProducts");
-          updateActiveFilterLabel("All Products");
-      });
-
-      document.getElementById("outOfStock").addEventListener("click", () => {
-        const outOfStock = allProducts.filter(p => p.stock === 0);
-        renderProducts(outOfStock);
-        setActiveStatCard("outOfStock");
-          updateActiveFilterLabel("Out of Stock");
-      });
-
-      document.getElementById("lowStock").addEventListener("click", () => {
-        const lowStock = allProducts.filter(p => p.stock > 0 && p.stock < 5);
-        renderProducts(lowStock);
-        setActiveStatCard("lowStock");
-          updateActiveFilterLabel("Low Stock");
-      });
-
-      document.getElementById("totalCategories").addEventListener("click", () => {
-        const categories = Array.from(new Set(allProducts.map(p => p.category?.name).filter(Boolean)));
-        if (categories.length === 0) return;
-
-        const selected = categories[categoryIndex];
-        const filtered = allProducts.filter(p => p.category?.name === selected);
-
-        renderProducts(filtered);
-        setActiveStatCard("totalCategories");
-          updateActiveFilterLabel(`Category: ${selected}`, true);
-        categoryIndex = (categoryIndex + 1) % categories.length;
-      });
-
-      document.getElementById("totalSuppliers").addEventListener("click", () => {
-        const suppliers = Array.from(new Set(allProducts.map(p => p.supplier?.name).filter(Boolean)));
-        if (suppliers.length === 0) return;
-
-        const selected = suppliers[supplierIndex];
-        const filtered = allProducts.filter(p => p.supplier?.name === selected);
-
-        renderProducts(filtered);
-        setActiveStatCard("totalSuppliers");
-          updateActiveFilterLabel(`Supplier: ${selected}`, true);
-        supplierIndex = (supplierIndex + 1) % suppliers.length;
-      });
     });
-  </script>
+
+    document.getElementById("totalProducts").addEventListener("click", () => {
+      currentPage = 1;
+      renderProducts(allProducts);
+      updatePageIndicator(allProducts.length);
+      setActiveStatCard("totalProducts");
+      updateActiveFilterLabel("All Products");
+    });
+
+    document.getElementById("outOfStock").addEventListener("click", () => {
+      const filtered = allProducts.filter(p => p.stock === 0);
+      currentPage = 1;
+      renderProducts(filtered);
+      updatePageIndicator(filtered.length);
+      setActiveStatCard("outOfStock");
+      updateActiveFilterLabel("Out of Stock");
+    });
+
+    document.getElementById("lowStock").addEventListener("click", () => {
+      const filtered = allProducts.filter(p => p.stock > 0 && p.stock < 5);
+      currentPage = 1;
+      renderProducts(filtered);
+      updatePageIndicator(filtered.length);
+      setActiveStatCard("lowStock");
+      updateActiveFilterLabel("Low Stock");
+    });
+
+    document.getElementById("totalCategories").addEventListener("click", () => {
+      const categories = Array.from(new Set(allProducts.map(p => p.category?.name).filter(Boolean)));
+      if (categories.length === 0) return;
+      const selected = categories[categoryIndex];
+      const filtered = allProducts.filter(p => p.category?.name === selected);
+      currentPage = 1;
+      renderProducts(filtered);
+      updatePageIndicator(filtered.length);
+      setActiveStatCard("totalCategories");
+      updateActiveFilterLabel(`Category: ${selected}`, true);
+      categoryIndex = (categoryIndex + 1) % categories.length;
+    });
+
+    document.getElementById("totalSuppliers").addEventListener("click", () => {
+      const suppliers = Array.from(new Set(allProducts.map(p => p.supplier?.name).filter(Boolean)));
+      if (suppliers.length === 0) return;
+      const selected = suppliers[supplierIndex];
+      const filtered = allProducts.filter(p => p.supplier?.name === selected);
+      currentPage = 1;
+      renderProducts(filtered);
+      updatePageIndicator(filtered.length);
+      setActiveStatCard("totalSuppliers");
+      updateActiveFilterLabel(`Supplier: ${selected}`, true);
+      supplierIndex = (supplierIndex + 1) % suppliers.length;
+    });
+  });
+</script>
 </body>
-</html
+</html>

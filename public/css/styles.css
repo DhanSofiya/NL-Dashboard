@@ -1344,7 +1344,6 @@ body.dark-mode .order-card .order-dates {
 .supplier-stats .stat-card.active {
   outline: 2px solid #000;
   color: #000;
-  background-color: #b2dfdb;
 }
 
 /* Dark Mode */
