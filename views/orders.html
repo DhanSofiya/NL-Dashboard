@@ -334,10 +334,23 @@
     });
 
     document.addEventListener("DOMContentLoaded", async () => {
-      await fetch("/components/sidebar.html")
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById("sidebar").innerHTML = html;
+  await fetch("/components/sidebar.html")
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById("sidebar").innerHTML = html;
+
+    // INSERT THIS BLOCK HERE:
+    fetch('/api/session-role')
+      .then(res => res.json())
+      .then(data => {
+        if (data.role === 'Staff') {
+          const financeItem = document.querySelector("#financeLink");
+          const usersItem = document.querySelector("#usersLink");
+          if (financeItem) financeItem.style.display = "none";
+          if (usersItem) usersItem.style.display = "none";
+        }
+      })
+      .catch(err => console.error("Role fetch error:", err));
 
           document.getElementById("logoutButton").addEventListener("click", async () => {
             await fetch("http://localhost:5000/auth/logout", { method: "POST" });

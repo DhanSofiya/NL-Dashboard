@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectSecondaryDB = () => {
   const connection = mongoose.createConnection(
-    'mongodb+srv://partimejobyt:iDdIoTrkzYxxmGvK@cluster0.3drrccw.mongodb.net/Nl_Retails?retryWrites=true&w=majority&appName=Cluster0'
+    'mongodb+srv://partimejobyt:iDdIoTrkzYxxmGvK@cluster0.3drrccw.mongodb.net/Nlretails?retryWrites=true&w=majority&appName=Cluster0'
   );
 
   connection.on('connected', () => {
