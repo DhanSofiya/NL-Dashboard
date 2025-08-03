@@ -3,9 +3,10 @@
 This is a full-stack web system built using Node.js, Express.js, and MongoDB Atlas. It handles customer orders, supplier coordination, inventory control, finance reports, and staff management. The system is designed using MVC architecture and integrates with a mobile app (as a partner project) for real-time data syncing.
 
 # Main Features
-<img width="1366" height="614" alt="image" src="https://github.com/user-attachments/assets/22aef519-1c7e-45c7-b6a3-89b3bc2b0162" />
-<img width="1366" height="616" alt="image" src="https://github.com/user-attachments/assets/a3bcc229-e49f-4632-b4df-d4acc0fd4733" />
-
+<p align="center">
+  <img width="49%" src="https://github.com/user-attachments/assets/22aef519-1c7e-45c7-b6a3-89b3bc2b0162" alt="image 1" />
+  <img width="49%" src="https://github.com/user-attachments/assets/a3bcc229-e49f-4632-b4df-d4acc0fd4733" alt="image 2" />
+</p>
 
 ## 1. Authentication
 - Login using email or phone number  
