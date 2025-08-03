@@ -27,15 +27,15 @@ This is a full-stack web system built using Node.js, Express.js, and MongoDB Atl
 - Add delivery notes and set delivery dates  
 
 ## 4. Inventory Management
-- Monitor and edit product stock  
-- Buttons for reordering and editing stock  
-- Product images with fallback handling  
+- Monitor and edit product stock
+- Buttons for reordering stock
+- Colored display for easy detection for no-stock/low-stock items
 
 ## 5. Finance Module
 - Generate daily revenue and expense reports  
-- Auto-create completed orders for test/demo  
+- Auto include completed orders
 - Show daily revenue, rider commission, and expenses  
-- Generate downloadable PDFs using PDFKit  
+- Generate downloadable PDFs using PDFKit
 
 ## 6. Supplier Management
 - CRUD functions for managing supplier information  
